@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8">
+ <beans:beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.hsbc.com/schema/esf-hosadapter2/fixlength-2.0.0" >
+	<fix-length-inbound-converter id="resp_converter" codeGen="true">
+		<message forType="com.rtm.test.ApplicationResponse">
+			<field type="DataField" length="10" fixedLength="true" transitory="true" defaultValue="RESPDTL" converter="stringFieldConverter" />
+			<field type="DataField" length="4" fixedLength="true" transitory="true" defaultValue="1" pad="0" alignRight="true" converter="stringFieldConverter" />
+			<field name="responseCode" type="CompositeField" forType="com.rtm.test.ResponseCode" >
+				<field name="responseCode" type="DataField" length="3" defaultValue="00" nullPad=" " converter="stringFieldConverter" />
+			</field>
+			
+			<field type="DataField" length="10" fixedLength="true" transitory="true" defaultValue="REASCODE" converter="stringFieldConverter" />
+			<field type="DataField" length="4" fixedLength="true" transitory="true" defaultValue="1" pad="0" alignRight="true" converter="counterFieldConverter" />
+			<field name="reasonCde" type="RepeatingField" fixedCount="1" forType="com.rtm.test.ReasonCode" >
+				<field name="reasonCode" type="DataField" length="7" defaultValue="00" nullPad=" " converter="stringFieldConverter" />
+			</field>
+			
+		</message>
+	</fix-length-inbound-converter> 
+ </beans>	
+</xml>
