@@ -1,0 +1,10 @@
+# Invalid config - missing required fields
+output:
+  rootDir: "./output"
+
+xml:
+  namespace:
+    inbound: null
+    outbound: null
+  project:
+    groupId: null

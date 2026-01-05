@@ -4,7 +4,10 @@
       "Bash(python:*)",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(dir:*)",
+      "Bash(mvn compile:*)",
+      "Bash(mvn test:*)"
     ]
   }
 }

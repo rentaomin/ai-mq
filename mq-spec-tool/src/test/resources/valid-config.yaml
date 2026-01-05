@@ -1,0 +1,30 @@
+output:
+  rootDir: "./test-output"
+
+xml:
+  namespace:
+    inbound: "com.example.inbound"
+    outbound: "com.example.outbound"
+  project:
+    groupId: "com.example"
+    artifactId: "test-project"
+
+java:
+  useLombok: true
+  packageName: "com.example.model"
+
+parser:
+  maxNestingDepth: 100
+
+openapi:
+  version: "3.1.0"
+  splitSchemas: false
+
+audit:
+  hashOutputs: true
+  redactFilePaths: true
+
+validation:
+  redactPayload: false
+
+loggingLevel: "DEBUG"

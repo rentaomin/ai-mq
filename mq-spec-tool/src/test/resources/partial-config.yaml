@@ -1,0 +1,7 @@
+# Partial config - only required fields
+xml:
+  namespace:
+    inbound: "com.partial.inbound"
+    outbound: "com.partial.outbound"
+  project:
+    groupId: "com.partial"

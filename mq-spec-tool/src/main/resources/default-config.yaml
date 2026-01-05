@@ -1,0 +1,30 @@
+output:
+  rootDir: "./output"
+
+xml:
+  namespace:
+    inbound: null   # Required - must be configured
+    outbound: null  # Required - must be configured
+  project:
+    groupId: null   # Required - must be configured
+    artifactId: null
+
+java:
+  useLombok: false
+  packageName: null  # Can be derived from groupId + artifactId
+
+parser:
+  maxNestingDepth: 50
+
+openapi:
+  version: "3.0.3"
+  splitSchemas: true
+
+audit:
+  hashOutputs: false
+  redactFilePaths: false
+
+validation:
+  redactPayload: true
+
+loggingLevel: "INFO"
