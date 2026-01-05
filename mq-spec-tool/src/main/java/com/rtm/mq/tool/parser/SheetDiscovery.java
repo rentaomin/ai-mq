@@ -13,11 +13,11 @@ import org.apache.poi.ss.usermodel.Workbook;
  * <p>Required sheets:</p>
  * <ul>
  *   <li>Request - Contains request message field definitions</li>
- *   <li>Response - Contains response message field definitions</li>
  * </ul>
  *
  * <p>Optional sheets:</p>
  * <ul>
+ *   <li>Response - Contains response message field definitions (some messages are request-only)</li>
  *   <li>Shared Header - Contains common header field definitions</li>
  * </ul>
  */
@@ -46,11 +46,8 @@ public class SheetDiscovery {
             throw new ParseException("Required sheet '" + REQUEST_SHEET + "' not found");
         }
 
-        // Required: Response sheet
+        // Optional: Response sheet (some messages are request-only)
         sheets.setResponse(findSheet(workbook, RESPONSE_SHEET));
-        if (sheets.getResponse() == null) {
-            throw new ParseException("Required sheet '" + RESPONSE_SHEET + "' not found");
-        }
 
         // Optional: Shared Header sheet
         sheets.setSharedHeader(findSheet(workbook, SHARED_HEADER_SHEET));

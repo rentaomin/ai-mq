@@ -1,0 +1,158 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MQ Spec Intermediate JSON Tree",
+  "description": "Schema for the intermediate JSON tree representation of parsed MQ message specifications",
+  "type": "object",
+  "required": ["metadata", "request", "response"],
+  "properties": {
+    "metadata": {
+      "type": "object",
+      "required": ["sourceFile", "parseTimestamp", "parserVersion", "operationId"],
+      "properties": {
+        "sourceFile": {
+          "type": "string",
+          "description": "Path to the source Excel specification file"
+        },
+        "sharedHeaderFile": {
+          "type": ["string", "null"],
+          "description": "Path to the shared header specification file (if applicable)"
+        },
+        "parseTimestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp when parsing occurred"
+        },
+        "parserVersion": {
+          "type": "string",
+          "description": "Version of the parser that processed this specification"
+        },
+        "operationName": {
+          "type": ["string", "null"],
+          "description": "Operation name extracted from the specification"
+        },
+        "operationId": {
+          "type": "string",
+          "description": "Operation ID (e.g., API endpoint identifier)"
+        },
+        "version": {
+          "type": ["string", "null"],
+          "description": "Version of the message specification"
+        }
+      }
+    },
+    "sharedHeader": {
+      "$ref": "#/definitions/fieldGroup",
+      "description": "Shared header fields common across messages"
+    },
+    "request": {
+      "$ref": "#/definitions/fieldGroup",
+      "description": "Request message structure (outbound)"
+    },
+    "response": {
+      "$ref": "#/definitions/fieldGroup",
+      "description": "Response message structure (inbound)"
+    }
+  },
+  "definitions": {
+    "fieldGroup": {
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/fieldNode"
+          },
+          "description": "Array of field nodes in this group"
+        }
+      }
+    },
+    "fieldNode": {
+      "type": "object",
+      "required": ["originalName", "segLevel", "_source"],
+      "properties": {
+        "originalName": {
+          "type": "string",
+          "description": "Original field name as it appears in the Excel specification"
+        },
+        "camelCaseName": {
+          "type": ["string", "null"],
+          "description": "CamelCase version of the field name for Java bean properties"
+        },
+        "className": {
+          "type": ["string", "null"],
+          "description": "Class name for object definitions (used when isObject is true)"
+        },
+        "segLevel": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Segment level indicating nesting depth (1-based)"
+        },
+        "length": {
+          "type": ["integer", "null"],
+          "description": "Field length constraint (null for unbounded fields)"
+        },
+        "dataType": {
+          "type": ["string", "null"],
+          "description": "Data type from the specification (e.g., 'N', 'A/N', 'A')"
+        },
+        "optionality": {
+          "type": ["string", "null"],
+          "enum": ["M", "O", null],
+          "description": "Optionality indicator: 'M' for mandatory, 'O' for optional"
+        },
+        "defaultValue": {
+          "type": ["string", "null"],
+          "description": "Default value to use when field is not present"
+        },
+        "hardCodeValue": {
+          "type": ["string", "null"],
+          "description": "Hardcoded value that must be used regardless of input"
+        },
+        "groupId": {
+          "type": ["string", "null"],
+          "description": "Group identifier for related fields"
+        },
+        "occurrenceCount": {
+          "type": ["string", "null"],
+          "description": "Occurrence count specification (e.g., '1..1', '0..N', '1..N')"
+        },
+        "isArray": {
+          "type": "boolean",
+          "description": "Flag indicating this field represents an array (repeating structure)"
+        },
+        "isObject": {
+          "type": "boolean",
+          "description": "Flag indicating this field represents an object (nested structure)"
+        },
+        "isTransitory": {
+          "type": "boolean",
+          "description": "Flag indicating this field is transitory and should not appear in final output"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/fieldNode"
+          },
+          "description": "Child field nodes for nested structures"
+        },
+        "_source": {
+          "type": "object",
+          "required": ["sheetName", "rowIndex"],
+          "properties": {
+            "sheetName": {
+              "type": "string",
+              "description": "Name of the Excel worksheet containing this field"
+            },
+            "rowIndex": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "1-based row index in the source worksheet"
+            }
+          },
+          "description": "Source metadata for audit traceability"
+        }
+      }
+    }
+  }
+}
