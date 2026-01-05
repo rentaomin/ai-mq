@@ -3,9 +3,6 @@ package com.rtm.mq.tool.model;
 /**
  * Represents the complete parsed message model from an Excel specification.
  *
- * <p>This is a placeholder interface for the message model.
- * The actual implementation will be provided in T-004 (Data Models).</p>
- *
  * <p>A message model contains:</p>
  * <ul>
  *   <li>Request structure (outbound message)</li>
@@ -15,7 +12,92 @@ package com.rtm.mq.tool.model;
  * </ul>
  *
  * @see FieldNode
+ * @see FieldGroup
+ * @see Metadata
  */
-public interface MessageModel {
-    // Placeholder interface - implementation details defined in T-004
+public class MessageModel {
+
+    /** Metadata about the parsed specification. */
+    private Metadata metadata;
+
+    /** Shared header field group. */
+    private FieldGroup sharedHeader;
+
+    /** Request message field group. */
+    private FieldGroup request;
+
+    /** Response message field group. */
+    private FieldGroup response;
+
+    /**
+     * Gets the metadata about the parsed specification.
+     *
+     * @return the metadata
+     */
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    /**
+     * Sets the metadata about the parsed specification.
+     *
+     * @param metadata the metadata to set
+     */
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
+
+    /**
+     * Gets the shared header field group.
+     *
+     * @return the shared header
+     */
+    public FieldGroup getSharedHeader() {
+        return sharedHeader;
+    }
+
+    /**
+     * Sets the shared header field group.
+     *
+     * @param sharedHeader the shared header to set
+     */
+    public void setSharedHeader(FieldGroup sharedHeader) {
+        this.sharedHeader = sharedHeader;
+    }
+
+    /**
+     * Gets the request message field group.
+     *
+     * @return the request field group
+     */
+    public FieldGroup getRequest() {
+        return request;
+    }
+
+    /**
+     * Sets the request message field group.
+     *
+     * @param request the request to set
+     */
+    public void setRequest(FieldGroup request) {
+        this.request = request;
+    }
+
+    /**
+     * Gets the response message field group.
+     *
+     * @return the response field group
+     */
+    public FieldGroup getResponse() {
+        return response;
+    }
+
+    /**
+     * Sets the response message field group.
+     *
+     * @param response the response to set
+     */
+    public void setResponse(FieldGroup response) {
+        this.response = response;
+    }
 }
