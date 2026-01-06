@@ -30,8 +30,6 @@ src/main/java/com/rtm/mq/tool/parser/
 ├── ExcelParser.java
 └── SharedHeaderLoader.java
 
-src/test/java/com/rtm/mq/tool/parser/
-└── ExcelParserTest.java
 ```
 
 ## Dependencies
@@ -321,21 +319,3 @@ public class SharedHeaderLoader {
 9. [ ] 重复字段检测生效
 10. [ ] 输入文件验证
 11. [ ] 集成测试覆盖
-
-## Tests
-
-| 测试类型 | 测试内容 | 预期结果 |
-|---------|---------|---------|
-| 集成测试 | 解析 create_app.xlsx | 所有字段正确 |
-| 集成测试 | 验证字段顺序 | 与 Excel 一致 |
-| 集成测试 | 验证嵌套关系 | 层级正确 |
-| 单元测试 | 文件不存在 | 抛出 ParseException |
-| 单元测试 | 非 Excel 文件 | 抛出 ParseException |
-
-## Risks / Edge Cases
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|---------|
-| 大文件内存 | OOM | 流式处理 |
-| 损坏的 Excel | 解析失败 | 详细错误消息 |
-| 编码问题 | 乱码 | 使用 UTF-8 |

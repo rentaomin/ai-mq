@@ -3,57 +3,26 @@ package com.rtm.mq.tool.generator.openapi;
 import com.rtm.mq.tool.config.Config;
 import com.rtm.mq.tool.model.FieldNode;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * OpenAPI Schema type mapper.
- *
- * <p>Maps {@link FieldNode} instances to OpenAPI 3.x Schema definitions.
- * This class is responsible for:</p>
- * <ul>
- *   <li>Mapping Excel dataType to OpenAPI type and format</li>
- *   <li>Generating array schemas with items.$ref</li>
- *   <li>Generating object references with $ref</li>
- *   <li>Collecting required fields based on optionality</li>
- *   <li>Generating maxLength constraints</li>
- *   <li>Generating default values</li>
- *   <li>Filtering transitory fields (groupId, occurrenceCount)</li>
- * </ul>
- *
- * <p>Uses {@link LinkedHashMap} to preserve field order consistent with
- * the intermediate JSON Tree.</p>
- *
- * @see FieldNode
+ * Maps FieldNode to OpenAPI 3.x Schema definitions.
  */
 public class OpenApiTypeMapper {
 
     private final Config config;
 
-    /**
-     * Constructs a new OpenApiTypeMapper with the specified configuration.
-     *
-     * @param config the configuration; may be null for default behavior
-     */
     public OpenApiTypeMapper(Config config) {
         this.config = config;
     }
 
     /**
-     * Maps a FieldNode to an OpenAPI Schema definition.
+     * Maps FieldNode to OpenAPI Schema Map.
+     * The returned Map can be directly serialized to YAML.
      *
-     * <p>The returned Map can be directly serialized to YAML. The structure
-     * varies based on the field type:</p>
-     * <ul>
-     *   <li>Array: type: array, items: {$ref: ...}, optionally maxItems</li>
-     *   <li>Object: $ref: ...</li>
-     *   <li>Primitive: type: string, optionally format, maxLength, default</li>
-     * </ul>
-     *
-     * @param field the field node to map
-     * @return the Schema definition as a Map; never null
+     * @param field field node
+     * @return Schema definition (Map structure)
      */
     public Map<String, Object> mapToSchema(FieldNode field) {
         Map<String, Object> schema = new LinkedHashMap<>();
@@ -65,7 +34,7 @@ public class OpenApiTypeMapper {
             items.put("$ref", "./" + field.getClassName() + ".yaml");
             schema.put("items", items);
 
-            // maxItems from occurrenceCount (e.g., "0..9")
+            // Array maxItems (based on occurrenceCount parsing, e.g. 0..9)
             Integer maxItems = parseMaxItems(field.getOccurrenceCount());
             if (maxItems != null) {
                 schema.put("maxItems", maxItems);
@@ -73,7 +42,7 @@ public class OpenApiTypeMapper {
             return schema;
         }
 
-        // Object type (use $ref)
+        // Object type (use $ref reference)
         if (field.isObject()) {
             schema.put("$ref", "./" + field.getClassName() + ".yaml");
             return schema;
@@ -97,18 +66,7 @@ public class OpenApiTypeMapper {
     }
 
     /**
-     * Maps a primitive data type to OpenAPI type and format.
-     *
-     * <p>Mapping rules:</p>
-     * <ul>
-     *   <li>String, AN, A, N, Number, Unsigned Integer: type: string</li>
-     *   <li>Amount, Currency: type: string, format: decimal</li>
-     *   <li>Date: type: string, format: date</li>
-     *   <li>Unknown/null: type: string (fallback)</li>
-     * </ul>
-     *
-     * @param dataType the data type from the specification
-     * @param schema the schema map to populate
+     * Maps primitive type to OpenAPI type and format.
      */
     private void mapPrimitiveType(String dataType, Map<String, Object> schema) {
         if (dataType == null || dataType.isEmpty()) {
@@ -120,7 +78,6 @@ public class OpenApiTypeMapper {
             case "string":
             case "an":
             case "a":
-            case "a/n":
             case "number":
             case "n":
             case "unsigned integer":
@@ -145,13 +102,8 @@ public class OpenApiTypeMapper {
     }
 
     /**
-     * Filters transitory fields from the list.
-     *
-     * <p>Transitory fields (groupId, occurrenceCount) should not appear
-     * in the OpenAPI Schema output.</p>
-     *
-     * @param fields the list of fields to filter
-     * @return a new list containing only non-transitory fields
+     * Filters transitory fields (groupId, occurrenceCount).
+     * These fields should not appear in OpenAPI Schema.
      */
     public List<FieldNode> filterTransitoryFields(List<FieldNode> fields) {
         List<FieldNode> filtered = new ArrayList<>();
@@ -164,13 +116,8 @@ public class OpenApiTypeMapper {
     }
 
     /**
-     * Collects required field names from the list.
-     *
-     * <p>A field is required if its optionality is "M" (mandatory).
-     * Transitory fields are excluded.</p>
-     *
-     * @param fields the list of fields to inspect
-     * @return a list of camelCase names for required fields
+     * Collects required field list.
+     * Based on optionality == "M".
      */
     public List<String> collectRequiredFields(List<FieldNode> fields) {
         List<String> required = new ArrayList<>();
@@ -183,23 +130,7 @@ public class OpenApiTypeMapper {
     }
 
     /**
-     * Generates a complete Object Schema including properties and required list.
-     *
-     * <p>The generated schema follows this structure:</p>
-     * <pre>
-     * type: object
-     * required:
-     *   - fieldA
-     *   - fieldB
-     * properties:
-     *   fieldA:
-     *     type: string
-     *   fieldB:
-     *     $ref: './FieldB.yaml'
-     * </pre>
-     *
-     * @param fields the list of child fields for this object
-     * @return the complete Object Schema as a Map
+     * Generates complete Object Schema (including properties and required).
      */
     public Map<String, Object> generateObjectSchema(List<FieldNode> fields) {
         Map<String, Object> schema = new LinkedHashMap<>();
@@ -225,19 +156,10 @@ public class OpenApiTypeMapper {
     }
 
     /**
-     * Parses occurrenceCount to extract maxItems value.
+     * Parses occurrenceCount to get maxItems.
+     * Format examples: "0..9", "1..N", "0..N"
      *
-     * <p>Supports formats like:</p>
-     * <ul>
-     *   <li>"0..9" returns 9</li>
-     *   <li>"1..5" returns 5</li>
-     *   <li>"0..N" returns null (unbounded)</li>
-     *   <li>"1..N" returns null (unbounded)</li>
-     *   <li>"0..*" returns null (unbounded)</li>
-     * </ul>
-     *
-     * @param occurrenceCount the occurrence count string
-     * @return the maxItems value, or null if unbounded
+     * @return maxItems value, returns null if N
      */
     private Integer parseMaxItems(String occurrenceCount) {
         if (occurrenceCount == null || occurrenceCount.isEmpty()) {
@@ -250,7 +172,7 @@ public class OpenApiTypeMapper {
             if (parts.length == 2) {
                 String max = parts[1].trim();
                 if ("N".equalsIgnoreCase(max) || "*".equals(max)) {
-                    return null; // Unbounded
+                    return null; // Unlimited
                 }
                 try {
                     return Integer.parseInt(max);
@@ -264,21 +186,19 @@ public class OpenApiTypeMapper {
     }
 
     /**
-     * Generates a $ref path for nested objects and array items.
+     * Generates $ref path.
+     * Used for nested object and array item references.
      *
-     * @param className the class name
-     * @param schemaDir the schema directory (e.g., "request", "response", "common")
-     * @return the relative $ref path
+     * @param className class name
+     * @param schemaDir Schema directory (e.g. "request", "response", "common")
+     * @return relative $ref path
      */
     public String generateRefPath(String className, String schemaDir) {
         return "./" + className + ".yaml";
     }
 
     /**
-     * Determines if a field should be included in the OpenAPI Schema.
-     *
-     * @param field the field to check
-     * @return true if the field should be included; false for transitory fields
+     * Determines if field should be included in OpenAPI Schema.
      */
     public boolean shouldIncludeInSchema(FieldNode field) {
         return !field.isTransitory();

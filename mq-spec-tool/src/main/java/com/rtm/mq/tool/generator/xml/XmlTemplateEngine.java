@@ -209,4 +209,18 @@ public class XmlTemplateEngine {
     public XmlTypeMapper getTypeMapper() {
         return typeMapper;
     }
+
+    /**
+     * Generates an empty Inbound XML document (when Response is empty).
+     *
+     * <p>This method generates a minimal inbound-converter.xml containing only
+     * the root beans:beans element with an empty fix-length-inbound-converter.
+     * This is used when the Response sheet is empty or has no fields.</p>
+     *
+     * @return the formatted empty XML string
+     */
+    public String generateEmptyInbound() {
+        XmlElement root = createRootElement("fix-length-inbound-converter", "resp_converter");
+        return formatter.format(wrapWithBeans(root, config.getXml().getNamespace().getInbound()));
+    }
 }

@@ -29,9 +29,6 @@ src/main/java/com/rtm/mq/tool/parser/
 ├── CamelCaseConverter.java
 └── DuplicateDetector.java
 
-src/test/java/com/rtm/mq/tool/parser/
-├── CamelCaseConverterTest.java
-└── DuplicateDetectorTest.java
 ```
 
 ## Dependencies
@@ -326,22 +323,3 @@ public class DuplicateDetector {
 7. [ ] 长度超限时添加哈希后缀
 8. [ ] 重复字段名检测抛出 ParseException
 9. [ ] 单元测试覆盖率 > 90%
-
-## Tests
-
-| 测试类型 | 测试内容 | 预期结果 |
-|---------|---------|---------|
-| 单元测试 | 下划线转换 | DOMICILE_BRANCH → domicileBranch |
-| 单元测试 | 连字符转换 | response-code → responseCode |
-| 单元测试 | CJK 转换 | 客户姓名 → keHuXingMing |
-| 单元测试 | 数字开头 | 123abc → field123Abc |
-| 单元测试 | 长度限制 | 超长名称 → 截断+哈希 |
-| 单元测试 | 重复检测 | 抛出 ParseException |
-
-## Risks / Edge Cases
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|---------|
-| 拼音库缺失 | 转换失败 | 回退保留原字符 |
-| 哈希冲突 | 名称仍重复 | 极低概率，可增加哈希长度 |
-| 空字符串 | 无效名称 | 生成哈希前缀 |

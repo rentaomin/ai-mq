@@ -31,6 +31,9 @@ public final class ExitCodes {
     /** Configuration error (e.g., required configuration missing). */
     public static final int CONFIG_ERROR = 5;
 
+    /** I/O error (e.g., file read/write failure). */
+    public static final int IO_ERROR = 6;
+
     /** Internal error - unexpected system failure. */
     public static final int INTERNAL_ERROR = 99;
 
@@ -54,6 +57,8 @@ public final class ExitCodes {
                 return "Validation error";
             case CONFIG_ERROR:
                 return "Configuration error";
+            case IO_ERROR:
+                return "I/O error";
             case INTERNAL_ERROR:
                 return "Internal error";
             default:

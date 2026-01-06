@@ -371,19 +371,3 @@ public class XmlTypeMapper {
 6. [ ] 金额字段使用 OHcurrencyamountFieldConverter
 7. [ ] forType 格式正确
 8. [ ] 属性顺序固定
-
-## Tests
-
-| 测试类型 | 测试内容 | 预期结果 |
-|---------|---------|---------|
-| 单元测试 | groupId 映射 | transitory=true |
-| 单元测试 | 对象映射 | CompositeField |
-| 单元测试 | 数组映射 | RepeatingField, fixedCount |
-| 单元测试 | converter 映射 | 类型正确 |
-
-## Risks / Edge Cases
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|---------|
-| 未知数据类型 | 默认 String | 日志警告 |
-| 空 className | forType 无效 | 验证非空 |

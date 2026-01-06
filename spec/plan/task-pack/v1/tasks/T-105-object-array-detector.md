@@ -32,8 +32,6 @@ src/main/java/com/rtm/mq/tool/parser/
 ├── ArrayInfo.java
 └── OccurrenceCountParser.java
 
-src/test/java/com/rtm/mq/tool/parser/
-└── ObjectArrayDetectorTest.java
 ```
 
 ## Dependencies
@@ -354,21 +352,3 @@ public class ObjectArrayDetector {
 5. [ ] 根据 occurrenceCount 判断数组 vs 对象
 6. [ ] groupId/occurrenceCount 字段标记为 isTransitory
 7. [ ] 单元测试覆盖各种场景
-
-## Tests
-
-| 测试类型 | 测试内容 | 预期结果 |
-|---------|---------|---------|
-| 单元测试 | 对象定义解析 | 正确提取 fieldName 和 className |
-| 单元测试 | groupId 识别 | isTransitory=true, groupId 值正确 |
-| 单元测试 | occurrenceCount 识别 | isTransitory=true, 值正确 |
-| 单元测试 | 数组判断 (0..9) | isArray=true |
-| 单元测试 | 对象判断 (1..1) | isObject=true |
-
-## Risks / Edge Cases
-
-| 风险 | 影响 | 缓解措施 |
-|------|------|---------|
-| 拼写变体 | 识别失败 | 忽略大小写 |
-| 格式错误 | 解析失败 | 详细错误消息 |
-| 空 Description | 值缺失 | 记录警告 |
