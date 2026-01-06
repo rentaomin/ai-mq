@@ -34,6 +34,9 @@ public final class ExitCodes {
     /** I/O error (e.g., file read/write failure). */
     public static final int IO_ERROR = 6;
 
+    /** Cross-artifact consistency validation failure. */
+    public static final int CONSISTENCY_ERROR = 44;
+
     /** Internal error - unexpected system failure. */
     public static final int INTERNAL_ERROR = 99;
 
@@ -59,6 +62,8 @@ public final class ExitCodes {
                 return "Configuration error";
             case IO_ERROR:
                 return "I/O error";
+            case CONSISTENCY_ERROR:
+                return "Cross-artifact consistency error";
             case INTERNAL_ERROR:
                 return "Internal error";
             default:
