@@ -68,6 +68,9 @@ public class FieldNode {
     /** Flag indicating this field is transitory and should not appear in final output. */
     private boolean isTransitory;
 
+    /** The enum constraint defining valid enum values (e.g., "01|02|03", "Y|N"). */
+    private String enumConstraint;
+
     /** Child field nodes for nested structures. Uses List to preserve field order. */
     private List<FieldNode> children = new ArrayList<>();
 
@@ -213,6 +216,24 @@ public class FieldNode {
      */
     public List<FieldNode> getChildren() {
         return children;
+    }
+
+    /**
+     * Checks if this field has any children.
+     *
+     * @return true if this field has child nodes
+     */
+    public boolean hasChildren() {
+        return children != null && !children.isEmpty();
+    }
+
+    /**
+     * Gets the enum constraint defining valid enum values.
+     *
+     * @return the enum constraint (e.g., "01|02|03", "Y|N"), or null if not an enum
+     */
+    public String getEnumConstraint() {
+        return enumConstraint;
     }
 
     /**
@@ -394,6 +415,17 @@ public class FieldNode {
          */
         public Builder isTransitory(boolean transitory) {
             node.isTransitory = transitory;
+            return this;
+        }
+
+        /**
+         * Sets the enum constraint for this field.
+         *
+         * @param constraint the enum constraint (e.g., "01|02|03", "Y|N")
+         * @return this builder for method chaining
+         */
+        public Builder enumConstraint(String constraint) {
+            node.enumConstraint = constraint;
             return this;
         }
 
