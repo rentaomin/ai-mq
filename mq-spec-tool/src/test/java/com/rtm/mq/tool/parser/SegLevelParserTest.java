@@ -471,4 +471,57 @@ class SegLevelParserTest {
         assertTrue(result.get(0).getChildren().isEmpty());
         assertTrue(result.get(1).getChildren().isEmpty());
     }
+
+    @Test
+    @DisplayName("Should handle container scope ending with same-level simple field after nested children")
+    void parseFields_containerScopeEnding_parsesCorrectly() {
+        createDataRow(8, 1, "limit", "Limit field", "10", "N", "M");
+        createDataRow(9, 1, "createApp:CreateApplication", "Create App", null, null, "M");
+        createDataRow(10, 1, "name", "Name", "50", "A/N", "M");
+        createDataRow(11, 1, "age", "Age", "3", "N", "O");
+        createDataRow(12, 1, "person:Person", "Person", null, null, "M");
+        createDataRow(13, 1, "address", "Address", "100", "A/N", "O");
+        createDataRow(14, 1, "phone", "Phone", "20", "N", "O");
+        createDataRow(15, 2, "cid:Child", "Child", null, null, "O");
+        createDataRow(16, 2, "name", "Child Name", "50", "A/N", "M");
+        createDataRow(17, 2, "age", "Child Age", "3", "N", "O");
+        createDataRow(18, 1, "birth", "Birth", "8", "N", "M");
+        createDataRow(19, 1, "work:Work", "Work", null, null, "O");
+        createDataRow(20, 1, "address", "Work Address", "100", "A/N", "O");
+        createDataRow(21, 1, "comany", "Company", "50", "A/N", "O");
+
+        List<FieldNode> result = parser.parseFields(sheet);
+
+        assertEquals(5, result.size());
+
+        assertEquals("limit", result.get(0).getOriginalName());
+        assertTrue(result.get(0).getChildren().isEmpty());
+
+        FieldNode createApp = result.get(1);
+        assertEquals("createApp:CreateApplication", createApp.getOriginalName());
+        assertEquals(2, createApp.getChildren().size());
+        assertEquals("name", createApp.getChildren().get(0).getOriginalName());
+        assertEquals("age", createApp.getChildren().get(1).getOriginalName());
+
+        FieldNode person = result.get(2);
+        assertEquals("person:Person", person.getOriginalName());
+        assertEquals(3, person.getChildren().size());
+        assertEquals("address", person.getChildren().get(0).getOriginalName());
+        assertEquals("phone", person.getChildren().get(1).getOriginalName());
+
+        FieldNode cid = person.getChildren().get(2);
+        assertEquals("cid:Child", cid.getOriginalName());
+        assertEquals(2, cid.getChildren().size());
+        assertEquals("name", cid.getChildren().get(0).getOriginalName());
+        assertEquals("age", cid.getChildren().get(1).getOriginalName());
+
+        assertEquals("birth", result.get(3).getOriginalName());
+        assertTrue(result.get(3).getChildren().isEmpty());
+
+        FieldNode work = result.get(4);
+        assertEquals("work:Work", work.getOriginalName());
+        assertEquals(2, work.getChildren().size());
+        assertEquals("address", work.getChildren().get(0).getOriginalName());
+        assertEquals("comany", work.getChildren().get(1).getOriginalName());
+    }
 }

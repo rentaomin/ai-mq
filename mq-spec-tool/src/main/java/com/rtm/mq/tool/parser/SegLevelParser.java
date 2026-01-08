@@ -78,6 +78,7 @@ public class SegLevelParser {
         Deque<FieldNode> stack = new ArrayDeque<>();
 
         int previousLevel = 0;
+        int previousSegLevel = 0;
 
         for (int i = DATA_START_ROW; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
@@ -85,41 +86,43 @@ public class SegLevelParser {
                 continue;
             }
 
-            // Create basic FieldNode from Excel data
-            FieldNode node = createBasicFieldNode(row, i + 1);  // 1-based row index
+            FieldNode node = createBasicFieldNode(row, i + 1);
             if (node == null) {
                 continue;
             }
 
             int segLevel = node.getSegLevel();
+            boolean isContainer = isContainerCandidate(node);
 
-            // Validate Seg lvl for invalid values and illegal jumps
             validateSegLevel(segLevel, previousLevel, i + 1, node.getOriginalName());
-
-            // Validate nesting depth (logs warning if exceeded)
             depthValidator.validateDepth(segLevel, i + 1, node.getOriginalName());
 
-            // Pop stack until we find the correct parent level
-            while (!stack.isEmpty() && stack.peek().getSegLevel() >= segLevel) {
-                stack.pop();
+            if (isContainer) {
+                while (!stack.isEmpty() && stack.peek().getSegLevel() >= segLevel) {
+                    stack.pop();
+                }
+            } else {
+                while (!stack.isEmpty() && stack.peek().getSegLevel() > segLevel) {
+                    stack.pop();
+                }
+                if (!stack.isEmpty() && stack.peek().getSegLevel() == segLevel
+                    && previousSegLevel > stack.peek().getSegLevel()) {
+                    stack.pop();
+                }
             }
 
-            // Add node to correct location in tree
             if (stack.isEmpty()) {
-                // Top-level field (Seg lvl = 1)
                 rootFields.add(node);
             } else {
-                // Nested field - add to parent's children
                 stack.peek().getChildren().add(node);
             }
 
-            // If this is a potential container (object/array), push onto stack
-            // The actual determination of isObject/isArray happens in T-105
-            if (isContainerCandidate(node)) {
+            if (isContainer) {
                 stack.push(node);
             }
 
             previousLevel = segLevel;
+            previousSegLevel = segLevel;
         }
 
         return rootFields;

@@ -37,8 +37,37 @@ public final class ExitCodes {
     /** Cross-artifact consistency validation failure. */
     public static final int CONSISTENCY_ERROR = 44;
 
+    /** CLI argument parsing error. */
+    public static final int CLI_ARGUMENT_ERROR = 10;
+
+    /** CLI unknown command error. */
+    public static final int CLI_UNKNOWN_COMMAND = 11;
+
+    /** CLI missing command error. */
+    public static final int CLI_MISSING_COMMAND = 12;
+
     /** Internal error - unexpected system failure. */
     public static final int INTERNAL_ERROR = 99;
+
+    // Atomic Output Manager Exit Codes (T-307)
+
+    /** Output directory is not writable. */
+    public static final int OUTPUT_NOT_WRITABLE = 61;
+
+    /** Insufficient disk space for output. */
+    public static final int INSUFFICIENT_DISK_SPACE = 62;
+
+    /** Consistency validation failed - cannot commit outputs. */
+    public static final int CONSISTENCY_VALIDATION_FAILED = 63;
+
+    /** Message validation failed - cannot commit outputs. */
+    public static final int MESSAGE_VALIDATION_FAILED = 64;
+
+    /** Atomic commit operation failed. */
+    public static final int ATOMIC_COMMIT_FAILED = 65;
+
+    /** Rollback operation failed. */
+    public static final int ROLLBACK_FAILED = 66;
 
     /**
      * Gets a human-readable description for an exit code.
@@ -64,8 +93,26 @@ public final class ExitCodes {
                 return "I/O error";
             case CONSISTENCY_ERROR:
                 return "Cross-artifact consistency error";
+            case CLI_ARGUMENT_ERROR:
+                return "CLI argument error";
+            case CLI_UNKNOWN_COMMAND:
+                return "Unknown command";
+            case CLI_MISSING_COMMAND:
+                return "Missing command";
             case INTERNAL_ERROR:
                 return "Internal error";
+            case OUTPUT_NOT_WRITABLE:
+                return "Output directory not writable";
+            case INSUFFICIENT_DISK_SPACE:
+                return "Insufficient disk space";
+            case CONSISTENCY_VALIDATION_FAILED:
+                return "Consistency validation failed";
+            case MESSAGE_VALIDATION_FAILED:
+                return "Message validation failed";
+            case ATOMIC_COMMIT_FAILED:
+                return "Atomic commit failed";
+            case ROLLBACK_FAILED:
+                return "Rollback failed";
             default:
                 return "Unknown error";
         }
