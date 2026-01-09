@@ -197,4 +197,5 @@ public class SpecGenerationController {
         // TODO: Load from versions.properties
         return ResponseEntity.ok("{\"version\": \"1.0.0-SNAPSHOT\", \"tool\": \"MQ Spec Tool\"}");
     }
+
 }

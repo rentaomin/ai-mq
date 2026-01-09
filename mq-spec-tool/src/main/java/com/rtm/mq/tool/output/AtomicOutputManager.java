@@ -47,33 +47,43 @@ public class AtomicOutputManager {
     private static final String MANIFEST_FILENAME = "output-manifest.json";
     private static final String TEMP_DIR_PREFIX = ".mq-temp-";
 
-    private final Path targetDir;
-    private final String transactionId;
+    private Path targetDir;
+    private String transactionId;
     private Path tempDir;
     private TransactionState state;
     private final Map<String, byte[]> pendingOutputs;
     private OutputManifest manifest;
 
-    /**
-     * Creates a new AtomicOutputManager for the specified target directory.
-     *
-     * @param targetDir the target output directory
-     * @throws NullPointerException if targetDir is null
-     */
+    public AtomicOutputManager() {
+        this.pendingOutputs = new LinkedHashMap<>();
+        this.state = TransactionState.PENDING;
+    }
+
     public AtomicOutputManager(Path targetDir) {
         this.targetDir = Objects.requireNonNull(targetDir, "targetDir must not be null");
         this.transactionId = UUID.randomUUID().toString();
         this.state = TransactionState.PENDING;
-        this.pendingOutputs = new LinkedHashMap<>(); // Preserve insertion order
+        this.pendingOutputs = new LinkedHashMap<>();
     }
 
-    /**
-     * Gets the transaction identifier.
-     *
-     * @return the unique transaction ID
-     */
+    public void initialize(String transactionId, Path outputDir) {
+        this.transactionId = Objects.requireNonNull(transactionId, "transactionId must not be null");
+        this.targetDir = Objects.requireNonNull(outputDir, "outputDir must not be null");
+        this.state = TransactionState.PENDING;
+        this.tempDir = null;
+        this.pendingOutputs.clear();
+        this.manifest = null;
+    }
+
     public String getTransactionId() {
         return transactionId;
+    }
+
+    public Path getOutputDirectory(String transactionId) {
+        if (this.transactionId == null || !this.transactionId.equals(transactionId)) {
+            throw new IllegalStateException("Transaction ID mismatch or not initialized");
+        }
+        return this.targetDir;
     }
 
     /**

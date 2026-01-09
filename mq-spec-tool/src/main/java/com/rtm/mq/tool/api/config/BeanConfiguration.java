@@ -1,10 +1,15 @@
 package com.rtm.mq.tool.api.config;
 
+import com.rtm.mq.tool.config.Config;
 import com.rtm.mq.tool.config.ConfigLoader;
+import com.rtm.mq.tool.generator.java.JavaBeanGenerator;
 import com.rtm.mq.tool.generator.java.JavaGenerator;
 import com.rtm.mq.tool.generator.openapi.OpenApiGenerator;
+import com.rtm.mq.tool.generator.openapi.OpenApiGeneratorImpl;
+import com.rtm.mq.tool.generator.xml.CompositeXmlGenerator;
 import com.rtm.mq.tool.generator.xml.XmlGenerator;
 import com.rtm.mq.tool.output.AtomicOutputManager;
+import com.rtm.mq.tool.parser.ExcelParser;
 import com.rtm.mq.tool.parser.Parser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,74 +25,82 @@ import org.springframework.web.multipart.commons.CommonsMultipartResolver;
  *   <li>Output managers</li>
  *   <li>Multipart file upload support</li>
  * </ul>
+ *
+ * <p>All generators and parsers are configured with default configuration and can be
+ * overridden through the {@link ConfigLoader} and {@link Config} classes.</p>
  */
 @Configuration
 public class BeanConfiguration {
 
     /**
-     * Creates Parser bean.
+     * Creates default configuration with all default values.
      *
-     * <p>NOTE: This requires implementation class. Replace with actual implementation.</p>
+     * @return config instance with default values
+     */
+    private Config createDefaultConfig() {
+        Config config = new Config();
+        config.setDefaults();
+        return config;
+    }
+
+    /**
+     * Creates Parser bean for Excel specification parsing.
+     *
+     * <p>Returns an ExcelParser instance configured with default settings.</p>
      *
      * @return parser instance
      */
     @Bean
     public Parser parser() {
-        // TODO: Replace with actual Parser implementation
-        // Example: return new ExcelParserImpl();
-        throw new UnsupportedOperationException(
-                "Parser bean not configured. " +
-                "Please provide concrete implementation of Parser interface."
-        );
+        Config config = createDefaultConfig();
+        return new ExcelParser(config);
     }
 
     /**
      * Creates XmlGenerator bean.
      *
+     * <p>Returns a CompositeXmlGenerator that coordinates both OutboundXmlGenerator
+     * and InboundXmlGenerator to produce complete XML bean definitions.</p>
+     *
      * @return XML generator instance
      */
     @Bean
     public XmlGenerator xmlGenerator() {
-        // TODO: Replace with actual XmlGenerator implementation
-        // Example: return new XmlGeneratorImpl();
-        throw new UnsupportedOperationException(
-                "XmlGenerator bean not configured. " +
-                "Please provide concrete implementation of XmlGenerator interface."
-        );
+        Config config = createDefaultConfig();
+        return new CompositeXmlGenerator(config);
     }
 
     /**
      * Creates JavaGenerator bean.
      *
+     * <p>Returns a JavaBeanGenerator instance configured with default settings.</p>
+     *
      * @return Java generator instance
      */
     @Bean
     public JavaGenerator javaGenerator() {
-        // TODO: Replace with actual JavaGenerator implementation
-        // Example: return new JavaBeanGenerator();
-        throw new UnsupportedOperationException(
-                "JavaGenerator bean not configured. " +
-                "Please provide concrete implementation of JavaGenerator interface."
-        );
+        Config config = createDefaultConfig();
+        return new JavaBeanGenerator(config);
     }
 
     /**
      * Creates OpenApiGenerator bean.
      *
+     * <p>Returns an OpenApiGeneratorImpl instance configured with default settings.</p>
+     *
      * @return OpenAPI generator instance
      */
     @Bean
     public OpenApiGenerator openApiGenerator() {
-        // TODO: Replace with actual OpenApiGenerator implementation
-        // Example: return new OpenApiGeneratorImpl();
-        throw new UnsupportedOperationException(
-                "OpenApiGenerator bean not configured. " +
-                "Please provide concrete implementation of OpenApiGenerator interface."
-        );
+        Config config = createDefaultConfig();
+        return new OpenApiGeneratorImpl(config);
     }
 
     /**
      * Creates ConfigLoader bean.
+     *
+     * <p>The ConfigLoader is responsible for loading and merging configuration
+     * from YAML files and CLI arguments.</p>
      *
      * @return config loader instance
      */
@@ -99,6 +112,9 @@ public class BeanConfiguration {
     /**
      * Creates AtomicOutputManager bean.
      *
+     * <p>The AtomicOutputManager ensures that all output files are written atomically,
+     * providing rollback capability if any step fails.</p>
+     *
      * @return atomic output manager instance
      */
     @Bean
@@ -109,8 +125,11 @@ public class BeanConfiguration {
     /**
      * Configures multipart file upload resolver.
      *
-     * <p>Max file size: 50MB</p>
-     * <p>Max request size: 100MB</p>
+     * <p>Configuration:</p>
+     * <ul>
+     *   <li>Max upload size: 50MB</li>
+     *   <li>Max in-memory size: 1MB</li>
+     * </ul>
      *
      * @return multipart resolver
      */

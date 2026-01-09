@@ -134,7 +134,7 @@ public class GenerationOrchestrator {
             // 7. Build response
             GenerationResponse response = new GenerationResponse(
                     transactionId,
-                    manifest.getState().name(),
+                    outputManager.getState().name(),
                     new ArrayList<>(allGeneratedFiles.keySet())
             );
 
@@ -168,16 +168,16 @@ public class GenerationOrchestrator {
 
         // Apply request overrides
         if (request.getXmlNamespaceInbound() != null) {
-            config.getXml().getNamespace().put("inbound", request.getXmlNamespaceInbound());
+            config.getXml().getNamespace().setInbound(request.getXmlNamespaceInbound());
         }
         if (request.getXmlNamespaceOutbound() != null) {
-            config.getXml().getNamespace().put("outbound", request.getXmlNamespaceOutbound());
+            config.getXml().getNamespace().setOutbound(request.getXmlNamespaceOutbound());
         }
         if (request.getXmlProjectGroupId() != null) {
-            config.getXml().getProject().put("groupId", request.getXmlProjectGroupId());
+            config.getXml().getProject().setGroupId(request.getXmlProjectGroupId());
         }
         if (request.getXmlProjectArtifactId() != null) {
-            config.getXml().getProject().put("artifactId", request.getXmlProjectArtifactId());
+            config.getXml().getProject().setArtifactId(request.getXmlProjectArtifactId());
         }
         if (request.getJavaPackageName() != null) {
             config.getJava().setPackageName(request.getJavaPackageName());
@@ -194,19 +194,89 @@ public class GenerationOrchestrator {
 
         // Apply custom overrides
         if (request.getOverrides() != null && !request.getOverrides().isEmpty()) {
-            // TODO: Implement deep merge logic for custom overrides
-            logger.debug("Custom overrides provided: {}", request.getOverrides());
+            applyCustomOverrides(config, request.getOverrides());
+            logger.debug("Custom overrides applied: {}", request.getOverrides());
         }
 
         return config;
     }
 
-    /**
-     * Returns the output directory for a transaction.
-     *
-     * @param transactionId the transaction ID
-     * @return path to output directory
-     */
+    private void applyCustomOverrides(Config config, Map<String, Object> overrides) {
+        for (Map.Entry<String, Object> entry : overrides.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            if (key.startsWith("xml.")) {
+                applyXmlOverride(config, key.substring(4), value);
+            } else if (key.startsWith("java.")) {
+                applyJavaOverride(config, key.substring(5), value);
+            } else if (key.startsWith("openapi.")) {
+                applyOpenApiOverride(config, key.substring(8), value);
+            } else {
+                logger.warn("Unknown override key: {}", key);
+            }
+        }
+    }
+
+    private void applyXmlOverride(Config config, String path, Object value) {
+        String[] parts = path.split("\\.");
+        if (parts.length == 0) {
+            return;
+        }
+
+        if ("namespace".equals(parts[0]) && parts.length == 2) {
+            String key = parts[1];
+            if ("inbound".equals(key)) {
+                config.getXml().getNamespace().setInbound(String.valueOf(value));
+            } else if ("outbound".equals(key)) {
+                config.getXml().getNamespace().setOutbound(String.valueOf(value));
+            } else {
+                logger.warn("Unsupported namespace override key: {}", key);
+            }
+        } else if ("project".equals(parts[0]) && parts.length == 2) {
+            String key = parts[1];
+            if ("groupId".equals(key)) {
+                config.getXml().getProject().setGroupId(String.valueOf(value));
+            } else if ("artifactId".equals(key)) {
+                config.getXml().getProject().setArtifactId(String.valueOf(value));
+            } else {
+                logger.warn("Unsupported project override key: {}", key);
+            }
+        } else {
+            logger.warn("Unsupported xml override path: xml.{}", path);
+        }
+    }
+
+    private void applyJavaOverride(Config config, String path, Object value) {
+        String[] parts = path.split("\\.");
+        if (parts.length == 0) {
+            return;
+        }
+
+        if ("packageName".equals(parts[0])) {
+            config.getJava().setPackageName(String.valueOf(value));
+        } else if ("useLombok".equals(parts[0])) {
+            config.getJava().setUseLombok(Boolean.parseBoolean(String.valueOf(value)));
+        } else {
+            logger.warn("Unsupported java override path: java.{}", path);
+        }
+    }
+
+    private void applyOpenApiOverride(Config config, String path, Object value) {
+        String[] parts = path.split("\\.");
+        if (parts.length == 0) {
+            return;
+        }
+
+        if ("version".equals(parts[0])) {
+            config.getOpenapi().setVersion(String.valueOf(value));
+        } else if ("splitSchemas".equals(parts[0])) {
+            config.getOpenapi().setSplitSchemas(Boolean.parseBoolean(String.valueOf(value)));
+        } else {
+            logger.warn("Unsupported openapi override path: openapi.{}", path);
+        }
+    }
+
     public Path getOutputDirectory(String transactionId) {
         return outputManager.getOutputDirectory(transactionId);
     }

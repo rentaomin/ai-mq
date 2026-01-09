@@ -31,14 +31,12 @@ public class ConfigLoader {
         this.yaml = new Yaml(new Constructor(Config.class, loaderOptions));
     }
 
-    /**
-     * Loads configuration with the specified priority: CLI > Config file > Defaults.
-     *
-     * @param configFile   path to YAML configuration file, may be null
-     * @param cliOverrides map of CLI argument names to values, may be null or empty
-     * @return fully initialized and validated configuration
-     * @throws ConfigException if configuration is invalid or cannot be loaded
-     */
+    public Config loadDefaults() {
+        Config config = new Config();
+        config.setDefaults();
+        return config;
+    }
+
     public Config load(Path configFile, Map<String, String> cliOverrides) {
         Config config = new Config();
 
