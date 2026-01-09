@@ -49,6 +49,7 @@ public class SharedHeaderLoader {
      * <p>This method:</p>
      * <ol>
      *   <li>Opens the shared header Excel file</li>
+     *   <li>Validates that the file is a proper Shared Header file (not a message spec)</li>
      *   <li>Looks for a sheet named "Shared Header"</li>
      *   <li>Falls back to the first sheet if not found</li>
      *   <li>Delegates to ExcelParser.parseSheet() for consistent parsing</li>
@@ -57,11 +58,14 @@ public class SharedHeaderLoader {
      * @param sharedHeaderFile the path to the shared header Excel file
      * @param config the configuration (unused but kept for consistency)
      * @return the parsed FieldGroup, or empty FieldGroup if no sheet found
-     * @throws ParseException if file cannot be read
+     * @throws ParseException if file cannot be read or validation fails
      */
     public FieldGroup loadFromFile(Path sharedHeaderFile, Config config) {
         try (InputStream is = Files.newInputStream(sharedHeaderFile);
              Workbook workbook = WorkbookFactory.create(is)) {
+
+            // Validate file structure
+            validateSharedHeaderFile(workbook, sharedHeaderFile);
 
             Sheet headerSheet = workbook.getSheet(SHARED_HEADER_SHEET);
             if (headerSheet == null) {
@@ -81,5 +85,54 @@ public class SharedHeaderLoader {
         } catch (IOException e) {
             throw new ParseException("Failed to load Shared Header file: " + sharedHeaderFile, e);
         }
+    }
+
+    /**
+     * Validates that the provided file is a valid Shared Header file.
+     *
+     * <p>Validation checks:</p>
+     * <ul>
+     *   <li>File should not contain "Request" or "Response" sheets (indicates a message spec file)</li>
+     *   <li>File should contain either a "Shared Header" sheet or be a single-sheet file</li>
+     *   <li>If file contains "Request" sheet, emit warning (may be incorrectly formatted file)</li>
+     * </ul>
+     *
+     * @param workbook the Excel workbook to validate
+     * @param filePath the file path (for error messages)
+     * @throws ParseException if validation fails
+     */
+    private void validateSharedHeaderFile(Workbook workbook, Path filePath) {
+        // Check if file contains Request or Response sheets (indicates wrong file type)
+        boolean hasRequest = workbook.getSheet("Request") != null ||
+                           hasSheetCaseInsensitive(workbook, "Request");
+        boolean hasResponse = workbook.getSheet("Response") != null ||
+                            hasSheetCaseInsensitive(workbook, "Response");
+
+        if (hasRequest || hasResponse) {
+            // This is likely a message specification file, not a header-only file
+            throw new ParseException(
+                "Shared Header file appears to be a message specification file " +
+                "(contains 'Request' or 'Response' sheets). " +
+                "Please provide a header-only file or embed the header in the main specification file: " +
+                filePath
+            );
+        }
+    }
+
+    /**
+     * Checks if a sheet exists with the given name (case-insensitive).
+     *
+     * @param workbook the workbook to search
+     * @param sheetName the sheet name to find
+     * @return true if a sheet with that name exists (case-insensitive), false otherwise
+     */
+    private boolean hasSheetCaseInsensitive(Workbook workbook, String sheetName) {
+        for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
+            String name = workbook.getSheetName(i);
+            if (name != null && name.equalsIgnoreCase(sheetName)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

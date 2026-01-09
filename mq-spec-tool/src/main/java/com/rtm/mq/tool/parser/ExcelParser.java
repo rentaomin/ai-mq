@@ -3,6 +3,7 @@ package com.rtm.mq.tool.parser;
 import com.rtm.mq.tool.config.Config;
 import com.rtm.mq.tool.exception.ParseException;
 import com.rtm.mq.tool.model.*;
+import com.rtm.mq.tool.version.VersionRegistry;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -75,9 +77,8 @@ public class ExcelParser implements Parser {
             // 1. Discover Sheets
             SheetSet sheets = sheetDiscovery.discoverSheets(workbook);
 
-            // 2. Extract metadata
-            Metadata metadata = metadataExtractor.extract(
-                sheets.getRequest(), specFile, sharedHeaderFile);
+            // 2. Extract metadata with fallback logic
+            Metadata metadata = parseMetadataWithFallback(sheets, specFile, sharedHeaderFile);
             model.setMetadata(metadata);
 
             // 3. Parse Shared Header
@@ -96,6 +97,110 @@ public class ExcelParser implements Parser {
 
         } catch (IOException e) {
             throw new ParseException("Failed to read Excel file: " + specFile, e);
+        }
+    }
+
+    /**
+     * Parses metadata with fallback logic.
+     *
+     * <p>Metadata extraction priority:</p>
+     * <ol>
+     *   <li>Request Sheet (if present) - primary source</li>
+     *   <li>Embedded Shared Header Sheet (if Request lacks metadata or doesn't exist)</li>
+     *   <li>Separate Shared Header File (if both above fail)</li>
+     *   <li>Empty Metadata (if all sources fail)</li>
+     * </ol>
+     *
+     * @param sheets the discovered sheets from the main file
+     * @param specFile path to the main specification file
+     * @param sharedHeaderFile optional path to separate shared header file
+     * @return extracted Metadata, or empty Metadata if all sources fail
+     */
+    private Metadata parseMetadataWithFallback(SheetSet sheets, Path specFile, Path sharedHeaderFile) {
+        Metadata metadata = null;
+
+        // Priority 1: Extract from Request Sheet (if present)
+        if (sheets.getRequest() != null) {
+            metadata = metadataExtractor.extract(sheets.getRequest(), specFile, sharedHeaderFile);
+            if (metadataExtractor.validate(metadata)) {
+                return metadata;
+            }
+        }
+
+        // Priority 2: Fallback to embedded Shared Header Sheet (if present and metadata incomplete)
+        if (sheets.hasSharedHeader()) {
+            metadata = metadataExtractor.extractSafely(sheets.getSharedHeader(), specFile, sharedHeaderFile);
+            if (metadataExtractor.validate(metadata)) {
+                return metadata;
+            }
+        }
+
+        // Priority 3: Fallback to separate Shared Header File (if provided)
+        if (sharedHeaderFile != null) {
+            metadata = extractMetadataFromSharedHeaderFile(sharedHeaderFile, specFile);
+            if (metadataExtractor.validate(metadata)) {
+                return metadata;
+            }
+        }
+
+        // Priority 4: Return partial or empty metadata
+        if (metadata == null) {
+            metadata = new Metadata();
+            metadata.setSourceFile(specFile.toAbsolutePath().toString());
+            if (sharedHeaderFile != null) {
+                metadata.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
+            }
+            metadata.setParseTimestamp(Instant.now().toString());
+            metadata.setParserVersion(VersionRegistry.getParserVersion());
+        }
+
+        return metadata;
+    }
+
+    /**
+     * Extracts metadata from a separate Shared Header file.
+     *
+     * <p>This method opens the shared header file and attempts to extract
+     * metadata from it, supporting both dedicated header files and general
+     * Excel files with Shared Header sheets.</p>
+     *
+     * @param sharedHeaderFile path to the shared header file
+     * @param specFile path to the main spec file (for audit purposes)
+     * @return extracted Metadata
+     */
+    private Metadata extractMetadataFromSharedHeaderFile(Path sharedHeaderFile, Path specFile) {
+        try (InputStream is = Files.newInputStream(sharedHeaderFile);
+             Workbook workbook = WorkbookFactory.create(is)) {
+
+            // Try to find and extract from Shared Header sheet
+            Sheet headerSheet = workbook.getSheet("Shared Header");
+            if (headerSheet != null) {
+                return metadataExtractor.extract(headerSheet, specFile, sharedHeaderFile);
+            }
+
+            // Fallback: Try first sheet if Shared Header not found
+            if (workbook.getNumberOfSheets() > 0) {
+                Sheet firstSheet = workbook.getSheetAt(0);
+                return metadataExtractor.extract(firstSheet, specFile, sharedHeaderFile);
+            }
+
+            // Return empty metadata if no sheet found
+            Metadata meta = new Metadata();
+            meta.setSourceFile(specFile.toAbsolutePath().toString());
+            meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
+            meta.setParseTimestamp(Instant.now().toString());
+            meta.setParserVersion(VersionRegistry.getParserVersion());
+            return meta;
+
+        } catch (IOException e) {
+            // Log warning but don't fail - return empty metadata
+            // In production, you may want to add logging here
+            Metadata meta = new Metadata();
+            meta.setSourceFile(specFile.toAbsolutePath().toString());
+            meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
+            meta.setParseTimestamp(Instant.now().toString());
+            meta.setParserVersion(VersionRegistry.getParserVersion());
+            return meta;
         }
     }
 

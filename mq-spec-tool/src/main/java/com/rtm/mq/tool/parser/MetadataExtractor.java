@@ -24,6 +24,13 @@ import java.time.Instant;
  * Row 7: (empty row)
  * Row 8: Header row
  * </pre>
+ *
+ * <p>Support for multiple metadata extraction sources:</p>
+ * <ul>
+ *   <li>Primary: Request Sheet (typical case)</li>
+ *   <li>Fallback: Shared Header Sheet (if embedded)</li>
+ *   <li>Fallback: Shared Header File (separate file case)</li>
+ * </ul>
  */
 public class MetadataExtractor {
 
@@ -58,6 +65,48 @@ public class MetadataExtractor {
         meta.setParseTimestamp(Instant.now().toString());
         meta.setParserVersion(VersionRegistry.getParserVersion());
 
+        // Extract metadata from the provided sheet
+        extractMetadataFields(sheet, meta);
+
+        return meta;
+    }
+
+    /**
+     * Extracts metadata from an Excel Sheet with null safety.
+     *
+     * <p>This method handles cases where the sheet may be null,
+     * rows may not exist, or cells may be missing.</p>
+     *
+     * @param sheet           Excel Sheet (may be null)
+     * @param sourceFile      path to the source Excel file
+     * @param sharedHeaderFile optional path to the shared header file
+     * @return a populated Metadata object, or empty if sheet is null
+     */
+    public Metadata extractSafely(Sheet sheet, Path sourceFile, Path sharedHeaderFile) {
+        if (sheet == null) {
+            Metadata meta = new Metadata();
+            meta.setSourceFile(sourceFile.toAbsolutePath().toString());
+            if (sharedHeaderFile != null) {
+                meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
+            }
+            meta.setParseTimestamp(Instant.now().toString());
+            meta.setParserVersion(VersionRegistry.getParserVersion());
+            return meta;
+        }
+        return extract(sheet, sourceFile, sharedHeaderFile);
+    }
+
+    /**
+     * Internal method to extract metadata fields from a sheet.
+     *
+     * @param sheet the sheet to extract from (may be null)
+     * @param meta  the Metadata object to populate
+     */
+    private void extractMetadataFields(Sheet sheet, Metadata meta) {
+        if (sheet == null) {
+            return;
+        }
+
         // Extract Operation Name (Row 2, Column C)
         String operationName = extractCellValue(sheet, ROW_OPERATION_NAME, COL_VALUE);
         meta.setOperationName(trimOrNull(operationName));
@@ -69,8 +118,6 @@ public class MetadataExtractor {
         // Extract Version (Row 3, Column E)
         String version = extractCellValue(sheet, ROW_OPERATION_ID, COL_VERSION_VALUE);
         meta.setVersion(trimOrNull(version));
-
-        return meta;
     }
 
     /**
