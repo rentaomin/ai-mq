@@ -1,10 +1,10 @@
 package com.rtm.mq.tool.generator.xml;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * Unit tests for ConverterMapper.
@@ -13,7 +13,7 @@ public class ConverterMapperTest {
 
     private ConverterMapper mapper;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         mapper = new ConverterMapper();
     }

@@ -7,6 +7,7 @@ import com.rtm.mq.tool.model.FieldGroup;
 import com.rtm.mq.tool.model.FieldNode;
 import com.rtm.mq.tool.model.SourceMetadata;
 import com.rtm.mq.tool.model.ValidationResult;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -63,7 +64,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testParseResponseSheet_Basic() throws IOException {
+    void testParseResponseSheet_Basic() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithResponseFields();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -78,7 +79,7 @@ class ResponseSheetParserTest {
     }
 
     @Test
-    void testParseResponseSheet_WithFields() throws IOException {
+    void testParseResponseSheet_WithFields() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithResponseFields();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -119,7 +120,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testFieldOrderPreserved() throws IOException {
+    void testFieldOrderPreserved() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithOrderedFields();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -140,7 +141,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testNestedStructureParsing() throws IOException {
+    void testNestedStructureParsing() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithNestedResponse();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -170,7 +171,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testObjectDetection() throws IOException {
+    void testObjectDetection() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithResponseObject();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -189,7 +190,7 @@ class ResponseSheetParserTest {
     }
 
     @Test
-    void testArrayDetection() throws IOException {
+    void testArrayDetection() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithResponseArray();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -212,7 +213,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testCamelCaseConversion() throws IOException {
+    void testCamelCaseConversion() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithResponseFields();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -235,7 +236,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testTransitoryFieldsMarked() throws IOException {
+    void testTransitoryFieldsMarked() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithGroupIdField();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -258,7 +259,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testSourceMetadataRecorded() throws IOException {
+    void testSourceMetadataRecorded() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithResponseFields();
         Workbook wb = openWorkbook(specFile);
         Sheet responseSheet = wb.getSheet("Response");
@@ -330,7 +331,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testConsistencyWithRequestParsing() throws IOException {
+    void testConsistencyWithRequestParsing() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithBothRequestAndResponse();
         Workbook wb = openWorkbook(specFile);
 
@@ -406,7 +407,7 @@ class ResponseSheetParserTest {
     // ==========================================================================
 
     @Test
-    void testInvalidSheetName_ThrowsException() throws IOException {
+    void testInvalidSheetName_ThrowsException() throws IOException, InvalidFormatException {
         Path specFile = createSpecWithWrongSheetName();
         Workbook wb = openWorkbook(specFile);
         Sheet invalidSheet = wb.getSheet("InvalidName");
@@ -425,7 +426,7 @@ class ResponseSheetParserTest {
     // Helper methods
     // ==========================================================================
 
-    private Workbook openWorkbook(Path path) throws IOException {
+    private Workbook openWorkbook(Path path) throws IOException, InvalidFormatException {
         return new XSSFWorkbook(path.toFile());
     }
 

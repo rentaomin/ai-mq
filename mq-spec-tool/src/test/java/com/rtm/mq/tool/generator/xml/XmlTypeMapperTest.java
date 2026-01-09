@@ -3,12 +3,12 @@ package com.rtm.mq.tool.generator.xml;
 import com.rtm.mq.tool.config.Config;
 import com.rtm.mq.tool.config.XmlConfig;
 import com.rtm.mq.tool.model.FieldNode;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for XmlTypeMapper.
@@ -18,7 +18,7 @@ public class XmlTypeMapperTest {
     private XmlTypeMapper mapper;
     private Config config;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         config = new Config();
         config.setDefaults();

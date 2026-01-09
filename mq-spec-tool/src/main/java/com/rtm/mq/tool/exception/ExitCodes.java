@@ -34,6 +34,9 @@ public final class ExitCodes {
     /** I/O error (e.g., file read/write failure). */
     public static final int IO_ERROR = 6;
 
+    /** Output error (e.g., output generation failure). */
+    public static final int OUTPUT_ERROR = 7;
+
     /** Cross-artifact consistency validation failure. */
     public static final int CONSISTENCY_ERROR = 44;
 
@@ -69,6 +72,23 @@ public final class ExitCodes {
     /** Rollback operation failed. */
     public static final int ROLLBACK_FAILED = 66;
 
+    // E2E Verification Exit Codes (T-310)
+
+    /** E2E completeness verification failed. */
+    public static final int E2E_COMPLETENESS_FAILED = 81;
+
+    /** E2E determinism verification failed. */
+    public static final int E2E_DETERMINISM_FAILED = 82;
+
+    /** E2E atomicity verification failed. */
+    public static final int E2E_ATOMICITY_FAILED = 83;
+
+    /** E2E audit integrity verification failed. */
+    public static final int E2E_AUDIT_INTEGRITY_FAILED = 84;
+
+    /** E2E CLI integration verification failed. */
+    public static final int E2E_CLI_INTEGRATION_FAILED = 85;
+
     /**
      * Gets a human-readable description for an exit code.
      *
@@ -91,6 +111,8 @@ public final class ExitCodes {
                 return "Configuration error";
             case IO_ERROR:
                 return "I/O error";
+            case OUTPUT_ERROR:
+                return "Output error";
             case CONSISTENCY_ERROR:
                 return "Cross-artifact consistency error";
             case CLI_ARGUMENT_ERROR:
@@ -113,6 +135,16 @@ public final class ExitCodes {
                 return "Atomic commit failed";
             case ROLLBACK_FAILED:
                 return "Rollback failed";
+            case E2E_COMPLETENESS_FAILED:
+                return "E2E completeness verification failed";
+            case E2E_DETERMINISM_FAILED:
+                return "E2E determinism verification failed";
+            case E2E_ATOMICITY_FAILED:
+                return "E2E atomicity verification failed";
+            case E2E_AUDIT_INTEGRITY_FAILED:
+                return "E2E audit integrity verification failed";
+            case E2E_CLI_INTEGRATION_FAILED:
+                return "E2E CLI integration verification failed";
             default:
                 return "Unknown error";
         }

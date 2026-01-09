@@ -1,10 +1,10 @@
 package com.rtm.mq.tool.generator.xml;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for XmlFieldAttributes.
