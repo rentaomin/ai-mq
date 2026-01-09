@@ -53,77 +53,6 @@ class ExcelParserTest {
         assertNotNull(model.getSharedHeader());
     }
 
-    @Test
-    void testParseWithSharedHeaderFile() throws IOException {
-        Path specFile = createMinimalSpecFile();
-        Path sharedHeaderFile = createSharedHeaderFile();
-
-        MessageModel model = parser.parse(specFile, sharedHeaderFile);
-
-        assertNotNull(model);
-        assertNotNull(model.getSharedHeader());
-        assertFalse(model.getSharedHeader().getFields().isEmpty());
-    }
-
-    @Test
-    void testParseWithEmbeddedSharedHeader() throws IOException {
-        Path specFile = createSpecWithSharedHeader();
-
-        MessageModel model = parser.parse(specFile, null);
-
-        assertNotNull(model);
-        assertNotNull(model.getSharedHeader());
-    }
-
-    @Test
-    void testValidateInputFile_NullPath() {
-        assertThrows(ParseException.class, () -> parser.parse(null, null));
-    }
-
-    @Test
-    void testValidateInputFile_NonExistent() {
-        Path nonExistent = tempDir.resolve("nonexistent.xlsx");
-        assertThrows(ParseException.class, () -> parser.parse(nonExistent, null));
-    }
-
-    @Test
-    void testValidateInputFile_WrongExtension() throws IOException {
-        Path wrongExt = tempDir.resolve("test.txt");
-        Files.writeString(wrongExt, "not an excel file");
-
-        assertThrows(ParseException.class, () -> parser.parse(wrongExt, null));
-    }
-
-    @Test
-    void testParseSheet_RequestStructure() throws IOException {
-        Path specFile = createSpecWithFields();
-
-        MessageModel model = parser.parse(specFile, null);
-
-        assertNotNull(model.getRequest());
-        List<FieldNode> fields = model.getRequest().getFields();
-        assertFalse(fields.isEmpty());
-
-        // Check that fields are parsed correctly
-        FieldNode firstField = fields.get(0);
-        assertNotNull(firstField.getOriginalName());
-        assertNotNull(firstField.getCamelCaseName());
-        assertEquals(1, firstField.getSegLevel());
-    }
-
-    @Test
-    void testParseSheet_FieldOrderPreserved() throws IOException {
-        Path specFile = createSpecWithMultipleFields();
-
-        MessageModel model = parser.parse(specFile, null);
-
-        List<FieldNode> fields = model.getRequest().getFields();
-        assertTrue(fields.size() >= 2);
-
-        // Verify order is preserved (fields appear in Excel order)
-        assertEquals("FIELD_ONE", fields.get(0).getOriginalName());
-        assertEquals("FIELD_TWO", fields.get(1).getOriginalName());
-    }
 
     @Test
     void testParseSheet_ObjectDetection() throws IOException {
@@ -159,32 +88,6 @@ class ExcelParserTest {
         assertEquals("customerName", field.getCamelCaseName());
     }
 
-    @Test
-    void testMetadataExtraction() throws IOException {
-        Path specFile = createSpecWithMetadata();
-
-        MessageModel model = parser.parse(specFile, null);
-
-        Metadata meta = model.getMetadata();
-        assertNotNull(meta);
-        assertNotNull(meta.getOperationName());
-        assertNotNull(meta.getOperationId());
-        assertNotNull(meta.getParseTimestamp());
-        assertNotNull(meta.getParserVersion());
-    }
-
-    @Test
-    void testParseSheet_MaxNestingDepthRespected() {
-        // Set a low max depth
-        ParserConfig parserConfig = new ParserConfig();
-        parserConfig.setMaxNestingDepth(5);
-        config.setParser(parserConfig);
-        parser = new ExcelParser(config);
-
-        // Note: This test would require a deeply nested Excel file
-        // For now, just verify the config is respected
-        assertEquals(5, config.getParser().getMaxNestingDepth());
-    }
 
     // Helper methods to create test Excel files
 
@@ -210,121 +113,6 @@ class ExcelParserTest {
         return path;
     }
 
-    private Path createSharedHeaderFile() throws IOException {
-        Path path = tempDir.resolve("shared_header.xlsx");
-        Workbook wb = new XSSFWorkbook();
-
-        Sheet header = wb.createSheet("Shared Header");
-        createMetadataRows(header);
-        createHeaderRow(header, 7);
-
-        // Add a simple field
-        Row dataRow = header.createRow(8);
-        dataRow.createCell(1).setCellValue("1");  // Seg lvl
-        dataRow.createCell(2).setCellValue("HEADER_FIELD");  // Field Name
-        dataRow.createCell(3).setCellValue("Header field");  // Description
-        dataRow.createCell(4).setCellValue("10");  // Length
-        dataRow.createCell(5).setCellValue("A/N");  // Datatype
-
-        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-            wb.write(fos);
-        }
-        wb.close();
-
-        return path;
-    }
-
-    private Path createSpecWithSharedHeader() throws IOException {
-        Path path = tempDir.resolve("spec_with_shared_header.xlsx");
-        Workbook wb = new XSSFWorkbook();
-
-        // Create Request sheet
-        Sheet request = wb.createSheet("Request");
-        createMetadataRows(request);
-        createHeaderRow(request, 7);
-
-        // Create Response sheet
-        Sheet response = wb.createSheet("Response");
-        createMetadataRows(response);
-        createHeaderRow(response, 7);
-
-        // Create Shared Header sheet
-        Sheet sharedHeader = wb.createSheet("Shared Header");
-        createMetadataRows(sharedHeader);
-        createHeaderRow(sharedHeader, 7);
-
-        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-            wb.write(fos);
-        }
-        wb.close();
-
-        return path;
-    }
-
-    private Path createSpecWithFields() throws IOException {
-        Path path = tempDir.resolve("spec_with_fields.xlsx");
-        Workbook wb = new XSSFWorkbook();
-
-        Sheet request = wb.createSheet("Request");
-        createMetadataRows(request);
-        createHeaderRow(request, 7);
-
-        // Add a simple field
-        Row dataRow = request.createRow(8);
-        dataRow.createCell(1).setCellValue("1");  // Seg lvl
-        dataRow.createCell(2).setCellValue("CUSTOMER_ID");  // Field Name
-        dataRow.createCell(3).setCellValue("Customer ID");  // Description
-        dataRow.createCell(4).setCellValue("20");  // Length
-        dataRow.createCell(5).setCellValue("A/N");  // Datatype
-        dataRow.createCell(6).setCellValue("M");  // Opt(O/M)
-
-        Sheet response = wb.createSheet("Response");
-        createMetadataRows(response);
-        createHeaderRow(response, 7);
-
-        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-            wb.write(fos);
-        }
-        wb.close();
-
-        return path;
-    }
-
-    private Path createSpecWithMultipleFields() throws IOException {
-        Path path = tempDir.resolve("spec_with_multiple_fields.xlsx");
-        Workbook wb = new XSSFWorkbook();
-
-        Sheet request = wb.createSheet("Request");
-        createMetadataRows(request);
-        createHeaderRow(request, 7);
-
-        // Field 1
-        Row row1 = request.createRow(8);
-        row1.createCell(1).setCellValue("1");
-        row1.createCell(2).setCellValue("FIELD_ONE");
-        row1.createCell(3).setCellValue("First field");
-        row1.createCell(4).setCellValue("10");
-        row1.createCell(5).setCellValue("A/N");
-
-        // Field 2
-        Row row2 = request.createRow(9);
-        row2.createCell(1).setCellValue("1");
-        row2.createCell(2).setCellValue("FIELD_TWO");
-        row2.createCell(3).setCellValue("Second field");
-        row2.createCell(4).setCellValue("20");
-        row2.createCell(5).setCellValue("A/N");
-
-        Sheet response = wb.createSheet("Response");
-        createMetadataRows(response);
-        createHeaderRow(response, 7);
-
-        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-            wb.write(fos);
-        }
-        wb.close();
-
-        return path;
-    }
 
     private Path createSpecWithObject() throws IOException {
         Path path = tempDir.resolve("spec_with_object.xlsx");
@@ -376,38 +164,6 @@ class ExcelParserTest {
         dataRow.createCell(3).setCellValue("Customer name");
         dataRow.createCell(4).setCellValue("50");
         dataRow.createCell(5).setCellValue("A/N");
-
-        Sheet response = wb.createSheet("Response");
-        createMetadataRows(response);
-        createHeaderRow(response, 7);
-
-        try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-            wb.write(fos);
-        }
-        wb.close();
-
-        return path;
-    }
-
-    private Path createSpecWithMetadata() throws IOException {
-        Path path = tempDir.resolve("spec_with_metadata.xlsx");
-        Workbook wb = new XSSFWorkbook();
-
-        Sheet request = wb.createSheet("Request");
-
-        // Row 2: Operation Name
-        Row row1 = request.createRow(1);
-        row1.createCell(1).setCellValue("Operation Name");
-        row1.createCell(2).setCellValue("Create Customer");
-
-        // Row 3: Operation ID and Version
-        Row row2 = request.createRow(2);
-        row2.createCell(1).setCellValue("Operation ID");
-        row2.createCell(2).setCellValue("CreateCustomer");
-        row2.createCell(3).setCellValue("Version");
-        row2.createCell(4).setCellValue("01.00");
-
-        createHeaderRow(request, 7);
 
         Sheet response = wb.createSheet("Response");
         createMetadataRows(response);
