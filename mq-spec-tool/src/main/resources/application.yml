@@ -1,0 +1,61 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: mq-spec-tool
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 100MB
+      file-size-threshold: 1MB
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      indent-output: true
+      write-dates-as-timestamps: false
+
+logging:
+  level:
+    root: INFO
+    com.rtm.mq.tool: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/mq-spec-tool.log
+
+# MQ Spec Tool configuration
+mq-spec-tool:
+  output:
+    root-dir: ./output
+    cleanup-temp-files: true
+  parser:
+    max-nesting-depth: 50
+  xml:
+    namespace:
+      inbound: null  # Must be configured via request or config file
+      outbound: null  # Must be configured via request or config file
+    project:
+      group-id: null
+      artifact-id: null
+  java:
+    use-lombok: false
+    package-name: null
+  openapi:
+    version: 3.0.3
+    split-schemas: true
+  audit:
+    enabled: true
+    hash-outputs: false
+    redact-file-paths: false
+  validation:
+    enabled: true
+    redact-payload: true
