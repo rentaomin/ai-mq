@@ -178,9 +178,10 @@ public class SegLevelParser {
     /**
      * Creates a basic FieldNode from an Excel row.
      *
-     * <p>This method extracts only the raw field metadata directly from Excel
-     * columns. Additional processing (camelCase naming, object/array detection,
-     * groupId/occurrenceCount extraction) is handled by subsequent tasks.</p>
+     * <p>This method extracts raw field metadata directly from Excel columns,
+     * including special handling for groupId and occurrenceCount fields.
+     * Additional processing (camelCase naming, object/array detection) is
+     * handled by subsequent tasks.</p>
      *
      * @param row the Excel row to parse
      * @param rowIndex the 1-based row index for error reporting
@@ -204,15 +205,51 @@ public class SegLevelParser {
         source.setSheetName(sheetName);
         source.setRowIndex(rowIndex);
 
+        // Extract groupId and occurrenceCount from description if applicable
+        String groupId = null;
+        String occurrenceCount = null;
+
+        String trimmedFieldName = fieldName.trim();
+        if (isGroupIdField(trimmedFieldName)) {
+            groupId = description != null ? description.trim() : null;
+        } else if (isOccurrenceCountField(trimmedFieldName)) {
+            occurrenceCount = description != null ? description.trim() : null;
+        }
+
         return FieldNode.builder()
-            .originalName(fieldName.trim())
+            .originalName(trimmedFieldName)
             .segLevel(segLevel)
             .length(parseLength(length))
             .dataType(dataType != null ? dataType.trim() : null)
             .optionality(optionality != null ? optionality.trim() : null)
-            // Note: description is preserved in source for T-105 to extract groupId/occurrenceCount
+            .groupId(groupId)
+            .occurrenceCount(occurrenceCount)
             .source(source)
             .build();
+    }
+
+    /**
+     * Checks if the field name represents a groupId field.
+     *
+     * @param fieldName the field name to check
+     * @return true if this is a groupId field
+     */
+    private boolean isGroupIdField(String fieldName) {
+        return "groupid".equalsIgnoreCase(fieldName);
+    }
+
+    /**
+     * Checks if the field name represents an occurrenceCount field.
+     *
+     * <p>Note: Handles both correct spelling "occurrenceCount" and the
+     * Excel typo "occurenceCount" (missing one 'r').</p>
+     *
+     * @param fieldName the field name to check
+     * @return true if this is an occurrenceCount field
+     */
+    private boolean isOccurrenceCountField(String fieldName) {
+        return "occurenceCount".equalsIgnoreCase(fieldName) ||
+               "occurrenceCount".equalsIgnoreCase(fieldName);
     }
 
     /**

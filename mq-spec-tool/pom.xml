@@ -123,6 +123,13 @@
             <version>${commons-cli.version}</version>
         </dependency>
 
+        <!-- File upload support for multipart requests -->
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.5</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
