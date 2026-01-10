@@ -37,6 +37,9 @@ public class MetadataExtractor {
     // Row indices (0-based)
     private static final int ROW_OPERATION_NAME = 1;    // Row 2
     private static final int ROW_OPERATION_ID = 2;      // Row 3
+    private static final int ROW_SERVICE_CATEGORY = 3;      // Row 3
+    private static final int ROW_SERVICE_COMPONENT = 4;      // Row 4
+    private static final int ROW_DESCRIPTION = 5;      // Row 5
 
     // Column indices (0-based)
     private static final int COL_LABEL = 1;             // Column B
@@ -118,6 +121,27 @@ public class MetadataExtractor {
         // Extract Version (Row 3, Column E)
         String version = extractCellValue(sheet, ROW_OPERATION_ID, COL_VERSION_VALUE);
         meta.setVersion(trimOrNull(version));
+
+        // Extract Version (Row 4, Column E)
+        String serviceCategory = extractCellValue(sheet, ROW_SERVICE_CATEGORY, COL_VERSION_VALUE);
+        meta.setServiceCategory(trimOrNull(serviceCategory));
+
+        // Extract Version (Row 4, Column E)
+        String serviceInterface = extractCellValue(sheet, ROW_SERVICE_CATEGORY, COL_VERSION_VALUE);
+        meta.setServiceInterface(trimOrNull(serviceInterface));
+
+        // Extract Version (Row 5, Column E)
+        String serviceComponent= extractCellValue(sheet, ROW_SERVICE_COMPONENT, COL_VERSION_VALUE);
+        meta.setServiceComponent(trimOrNull(serviceComponent));
+        
+        // Extract Version (Row 5, Column E)
+        String serviceID = extractCellValue(sheet, ROW_SERVICE_COMPONENT, COL_VERSION_VALUE);
+        meta.setServiceID(trimOrNull(serviceID));
+
+        // Extract Version (Row 6, Column E)
+        String description = extractCellValue(sheet, ROW_DESCRIPTION, COL_VERSION_VALUE);
+        meta.setDescription(trimOrNull(description));
+        
     }
 
     /**
