@@ -388,7 +388,7 @@ public class ExcelParser implements Parser {
             throw new ParseException("Input file is not readable: " + file);
         }
         String fileName = file.getFileName().toString().toLowerCase();
-        if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls")) {
+        if (!fileName.endsWith(".xlsx") && !fileName.endsWith(".xls") && !fileName.endsWith(".xlsm")) {
             throw new ParseException("Input file is not an Excel file: " + file);
         }
     }

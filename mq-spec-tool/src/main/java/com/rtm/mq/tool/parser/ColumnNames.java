@@ -17,7 +17,7 @@ public final class ColumnNames {
     public static final String SEG_LVL = "Seg lvl";
 
     /** Field name column - the identifier for the field */
-    public static final String FIELD_NAME = "Field Name";
+    public static final String FIELD_NAME = "FieldName";
 
     /** Description column - human-readable description */
     public static final String DESCRIPTION = "Description";
@@ -30,7 +30,7 @@ public final class ColumnNames {
 
     // Optional columns
     /** Optionality column - O for optional, M for mandatory */
-    public static final String OPTIONALITY = "Opt(O/M)";
+    public static final String OPTIONALITY = "Opt (O/M)";
 
     /** Null allowed column - Y/N indicator */
     public static final String NULL_YN = "Null (Y/N)";
@@ -49,4 +49,6 @@ public final class ColumnNames {
 
     /** Test value column - value used for testing */
     public static final String TEST_VALUE = "Test Value";
+    
+    public static final String HARD_CODE_VALUE_FOR_MNL = "Hard code Value for MNL";
 }
