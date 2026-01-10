@@ -27,6 +27,12 @@ public class SourceMetadata {
     private int rowIndex;
 
     /**
+     * The byte offset for fixed-format messages (e.g., ISM v2.0 FIX).
+     * This is populated when the field is parsed from a fixed-format specification.
+     */
+    private Integer byteOffset;
+
+    /**
      * Default constructor.
      */
     public SourceMetadata() {
@@ -77,5 +83,23 @@ public class SourceMetadata {
      */
     public void setRowIndex(int rowIndex) {
         this.rowIndex = rowIndex;
+    }
+
+    /**
+     * Gets the byte offset for fixed-format messages.
+     *
+     * @return the byte offset, or null if not applicable
+     */
+    public Integer getByteOffset() {
+        return byteOffset;
+    }
+
+    /**
+     * Sets the byte offset for fixed-format messages.
+     *
+     * @param byteOffset the byte offset to set
+     */
+    public void setByteOffset(Integer byteOffset) {
+        this.byteOffset = byteOffset;
     }
 }

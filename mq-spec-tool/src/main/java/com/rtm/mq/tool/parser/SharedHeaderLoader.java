@@ -68,9 +68,6 @@ public class SharedHeaderLoader {
         try (InputStream is = Files.newInputStream(sharedHeaderFile);
              Workbook workbook = WorkbookFactory.create(is)) {
 
-            // Validate file structure
-            validateSharedHeaderFile(workbook, sharedHeaderFile);
-
             Sheet headerSheet = workbook.getSheet(SHARED_HEADER_SHEET);
             if (headerSheet == null) {
                 // Try first sheet as fallback
@@ -83,8 +80,22 @@ public class SharedHeaderLoader {
                 return new FieldGroup();
             }
 
-            // Reuse the parser's parseSheet logic to ensure consistency
-            return parser.parseSheet(headerSheet, "Shared Header");
+            // Detect format and route to appropriate parser
+            SharedHeaderFormatDetector detector = new SharedHeaderFormatDetector();
+            SharedHeaderFormatDetector.FileFormat format = detector.detectFormat(workbook, headerSheet);
+
+            if (format == SharedHeaderFormatDetector.FileFormat.ISM_V2_FIX) {
+                // Use ISM v2.0 FIX parser
+                IsmV2FixParser ismParser = new IsmV2FixParser();
+                return ismParser.parse(headerSheet);
+            } else {
+                // Use standard format parser
+                // Validate file structure only for standard format
+                validateSharedHeaderFile(workbook, sharedHeaderFile);
+
+                // Reuse the parser's parseSheet logic to ensure consistency
+                return parser.parseSheet(headerSheet, "Shared Header");
+            }
 
         } catch (IOException e) {
             throw new ParseException("Failed to load Shared Header file: " + sharedHeaderFile, e);

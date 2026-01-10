@@ -179,33 +179,63 @@ public class ExcelParser implements Parser {
             // Try to find and extract from Shared Header sheet
             Sheet headerSheet = workbook.getSheet("Shared Header");
             if (headerSheet != null) {
-                return metadataExtractor.extract(headerSheet, specFile, sharedHeaderFile);
+                // Detect format before extracting metadata
+                SharedHeaderFormatDetector detector = new SharedHeaderFormatDetector();
+                SharedHeaderFormatDetector.FileFormat format = detector.detectFormat(workbook, headerSheet);
+
+                if (format == SharedHeaderFormatDetector.FileFormat.ISM_V2_FIX) {
+                    // ISM v2.0 FIX has no metadata - return empty metadata
+                    return createEmptyMetadata(specFile, sharedHeaderFile);
+                } else {
+                    // Standard format - extract metadata normally
+                    return metadataExtractor.extract(headerSheet, specFile, sharedHeaderFile);
+                }
             }
 
             // Fallback: Try first sheet if Shared Header not found
             if (workbook.getNumberOfSheets() > 0) {
                 Sheet firstSheet = workbook.getSheetAt(0);
-                return metadataExtractor.extract(firstSheet, specFile, sharedHeaderFile);
+
+                // Detect format before extracting metadata
+                SharedHeaderFormatDetector detector = new SharedHeaderFormatDetector();
+                SharedHeaderFormatDetector.FileFormat format = detector.detectFormat(workbook, firstSheet);
+
+                if (format == SharedHeaderFormatDetector.FileFormat.ISM_V2_FIX) {
+                    // ISM v2.0 FIX has no metadata - return empty metadata
+                    return createEmptyMetadata(specFile, sharedHeaderFile);
+                } else {
+                    // Standard format - extract metadata normally
+                    return metadataExtractor.extract(firstSheet, specFile, sharedHeaderFile);
+                }
             }
 
             // Return empty metadata if no sheet found
-            Metadata meta = new Metadata();
-            meta.setSourceFile(specFile.toAbsolutePath().toString());
-            meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
-            meta.setParseTimestamp(Instant.now().toString());
-            meta.setParserVersion(VersionRegistry.getParserVersion());
-            return meta;
+            return createEmptyMetadata(specFile, sharedHeaderFile);
 
         } catch (IOException e) {
             // Log warning but don't fail - return empty metadata
             // In production, you may want to add logging here
-            Metadata meta = new Metadata();
-            meta.setSourceFile(specFile.toAbsolutePath().toString());
-            meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
-            meta.setParseTimestamp(Instant.now().toString());
-            meta.setParserVersion(VersionRegistry.getParserVersion());
-            return meta;
+            return createEmptyMetadata(specFile, sharedHeaderFile);
         }
+    }
+
+    /**
+     * Creates an empty Metadata object with file paths and timestamps.
+     *
+     * <p>Used as a fallback when metadata cannot be extracted or is not applicable
+     * (e.g., for ISM v2.0 FIX files which have no metadata).</p>
+     *
+     * @param specFile the main specification file path
+     * @param sharedHeaderFile the shared header file path
+     * @return a Metadata object with file paths and timestamps
+     */
+    private Metadata createEmptyMetadata(Path specFile, Path sharedHeaderFile) {
+        Metadata meta = new Metadata();
+        meta.setSourceFile(specFile.toAbsolutePath().toString());
+        meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
+        meta.setParseTimestamp(Instant.now().toString());
+        meta.setParserVersion(VersionRegistry.getParserVersion());
+        return meta;
     }
 
     /**
