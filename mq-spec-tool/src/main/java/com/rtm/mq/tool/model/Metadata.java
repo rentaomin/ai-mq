@@ -31,6 +31,17 @@ public class Metadata {
     /** The version of the message specification. */
     private String version;
 
+    private String serviceCategory;
+    
+    private String serviceInterface;
+    
+    private String serviceComponent;
+    
+    private String serviceID;
+    
+    private String description;
+    
+    
     /**
      * Gets the path to the source Excel specification file.
      *
@@ -155,5 +166,45 @@ public class Metadata {
      */
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getServiceCategory() {
+        return serviceCategory;
+    }
+
+    public void setServiceCategory(String serviceCategory) {
+        this.serviceCategory = serviceCategory;
+    }
+
+    public String getServiceInterface() {
+        return serviceInterface;
+    }
+
+    public void setServiceInterface(String serviceInterface) {
+        this.serviceInterface = serviceInterface;
+    }
+
+    public String getServiceComponent() {
+        return serviceComponent;
+    }
+
+    public void setServiceComponent(String serviceComponent) {
+        this.serviceComponent = serviceComponent;
+    }
+
+    public String getServiceID() {
+        return serviceID;
+    }
+
+    public void setServiceID(String serviceID) {
+        this.serviceID = serviceID;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
