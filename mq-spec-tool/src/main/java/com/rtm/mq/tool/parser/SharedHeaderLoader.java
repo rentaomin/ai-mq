@@ -1,12 +1,13 @@
 package com.rtm.mq.tool.parser;
 
 import com.rtm.mq.tool.config.Config;
+import com.rtm.mq.tool.config.ParserConfig;
 import com.rtm.mq.tool.exception.ParseException;
 import com.rtm.mq.tool.model.FieldGroup;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -61,6 +62,9 @@ public class SharedHeaderLoader {
      * @throws ParseException if file cannot be read or validation fails
      */
     public FieldGroup loadFromFile(Path sharedHeaderFile, Config config) {
+        // Configure POI ZipSecureFile to handle larger files with higher compression ratios
+        configureZipSecureFile(config);
+
         try (InputStream is = Files.newInputStream(sharedHeaderFile);
              Workbook workbook = WorkbookFactory.create(is)) {
 
@@ -117,6 +121,17 @@ public class SharedHeaderLoader {
                 filePath
             );
         }
+    }
+
+    /**
+     * Configures POI ZipSecureFile settings from the provided configuration.
+     *
+     * @param config the configuration containing POI settings
+     */
+    private void configureZipSecureFile(Config config) {
+        ParserConfig parserConfig = config.getParser();
+        ZipSecureFile.setMaxTextSize(parserConfig.getPoiMaxTextSize());
+        ZipSecureFile.setMinInflateRatio(parserConfig.getPoiMinInflateRatio());
     }
 
     /**

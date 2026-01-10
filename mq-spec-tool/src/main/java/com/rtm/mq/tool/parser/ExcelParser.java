@@ -1,14 +1,15 @@
 package com.rtm.mq.tool.parser;
 
 import com.rtm.mq.tool.config.Config;
+import com.rtm.mq.tool.config.ParserConfig;
 import com.rtm.mq.tool.exception.ParseException;
 import com.rtm.mq.tool.model.*;
 import com.rtm.mq.tool.version.VersionRegistry;
+import org.apache.poi.openxml4j.util.ZipSecureFile;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -68,6 +69,9 @@ public class ExcelParser implements Parser {
         if (sharedHeaderFile != null) {
             validateInputFile(sharedHeaderFile);
         }
+
+        // Configure POI ZipSecureFile to handle larger files with higher compression ratios
+        configureZipSecureFile();
 
         try (InputStream is = Files.newInputStream(specFile);
              Workbook workbook = WorkbookFactory.create(is)) {
@@ -353,6 +357,18 @@ public class ExcelParser implements Parser {
         } else {
             return new FieldGroup();  // Empty header
         }
+    }
+
+    /**
+     * Configures POI ZipSecureFile settings for handling compressed Excel files.
+     *
+     * <p>This method applies settings from ParserConfig to allow processing of
+     * larger or more highly compressed Excel files.</p>
+     */
+    private void configureZipSecureFile() {
+        ParserConfig parserConfig = config.getParser();
+        ZipSecureFile.setMaxTextSize(parserConfig.getPoiMaxTextSize());
+        ZipSecureFile.setMinInflateRatio(parserConfig.getPoiMinInflateRatio());
     }
 
     /**
