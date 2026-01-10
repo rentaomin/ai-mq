@@ -13,7 +13,6 @@ import com.rtm.mq.tool.parser.ExcelParser;
 import com.rtm.mq.tool.parser.Parser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.multipart.commons.CommonsMultipartResolver;
 
 /**
  * Spring Bean configuration for MQ Spec Tool components.
@@ -122,22 +121,4 @@ public class BeanConfiguration {
         return new AtomicOutputManager();
     }
 
-    /**
-     * Configures multipart file upload resolver.
-     *
-     * <p>Configuration:</p>
-     * <ul>
-     *   <li>Max upload size: 50MB</li>
-     *   <li>Max in-memory size: 1MB</li>
-     * </ul>
-     *
-     * @return multipart resolver
-     */
-    @Bean(name = "multipartResolver")
-    public CommonsMultipartResolver multipartResolver() {
-        CommonsMultipartResolver resolver = new CommonsMultipartResolver();
-        resolver.setMaxUploadSize(52428800); // 50MB
-        resolver.setMaxInMemorySize(1048576); // 1MB
-        return resolver;
-    }
 }
