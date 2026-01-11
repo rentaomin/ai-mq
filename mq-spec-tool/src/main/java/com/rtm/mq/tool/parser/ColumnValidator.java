@@ -32,7 +32,7 @@ public class ColumnValidator {
     /** Required column names (normalized) */
     private static final List<String> REQUIRED_COLUMNS = Arrays.asList(
         "Seg lvl",
-        "Field Name",
+        "FieldName",
         "Description",
         "Length",
         "Messaging Datatype"
@@ -40,7 +40,7 @@ public class ColumnValidator {
 
     /** Optional column names */
     private static final List<String> OPTIONAL_COLUMNS = Arrays.asList(
-        "Opt(O/M)",
+        "Opt (O/M)",
         "Null (Y/N)",
         "NLS (Y/N)",
         "Sample Value(s)",
