@@ -35,7 +35,7 @@ import java.nio.file.Path;
  */
 public class MqMessageLoader {
 
-    private static final String SHARED_HEADER_SHEET = "Shared Header";
+    private static final String ISM_V2_SHEET = "ISM V2.0 FIX";
 
     private final ExcelParser parser;
 
@@ -73,7 +73,7 @@ public class MqMessageLoader {
              Workbook workbook = WorkbookFactory.create(is)) {
 
             // Find sheet (prefer "Shared Header", fallback to first sheet)
-            Sheet sheet = workbook.getSheet(SHARED_HEADER_SHEET);
+            Sheet sheet = workbook.getSheet(ISM_V2_SHEET);
             if (sheet == null) {
                 if (workbook.getNumberOfSheets() > 0) {
                     sheet = workbook.getSheetAt(0);
