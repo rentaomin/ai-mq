@@ -10,6 +10,7 @@ buildNumber.properties
 .mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
 .idea/*
+../.idea
 # Compiled class files
 *.class
 
