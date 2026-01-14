@@ -108,33 +108,21 @@ public class SpecGenerationController {
                 logger.debug("Saved shared header file to: {}", tempSharedHeaderFile);
             }
 
-            // 3. Build generation request
-            GenerationRequest genRequest = new GenerationRequest();
-            genRequest.setXmlNamespaceInbound(xmlNamespaceInbound);
-            genRequest.setXmlNamespaceOutbound(xmlNamespaceOutbound);
-            genRequest.setXmlProjectGroupId(xmlProjectGroupId);
-            genRequest.setXmlProjectArtifactId(xmlProjectArtifactId);
-            genRequest.setJavaPackageName(javaPackageName);
-            genRequest.setUseLombok(useLombok);
-            genRequest.setOpenApiVersion(openApiVersion);
-            genRequest.setSplitSchemas(splitSchemas);
-
-            // 4. Execute generation
+            // 3. Execute generation
             GenerationResponse response = orchestrator.generate(
                     tempSpecFile,
-                    tempSharedHeaderFile,
-                    genRequest
+                    tempSharedHeaderFile
             );
 
             logger.info("Generation completed. Transaction ID: {}", response.getTransactionId());
 
-            // 5. Create ZIP archive from output directory
+            // 4. Create ZIP archive from output directory
             Path outputDir = orchestrator.getOutputDirectory(response.getTransactionId());
             Path zipFile = Files.createTempFile("mq-spec-output-", ".zip");
 
             createZipArchive(outputDir, zipFile);
 
-            // 6. Return ZIP file as download
+            // 5. Return ZIP file as download
             Resource resource = new FileSystemResource(zipFile);
             String filename = "mq-spec-output-" + response.getTransactionId() + ".zip";
 
