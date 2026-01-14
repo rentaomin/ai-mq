@@ -73,14 +73,14 @@ public class GenerationOrchestrator {
      * Executes the full generation pipeline.
      *
      * @param specFile path to MQ spec Excel file
-     * @param sharedHeaderFile path to shared header Excel file (optional, can be null)
+     * @param mqMessageFile path to MQ message Excel file (optional, can be null)
      * @return generation response with transaction ID and file manifest
      * @throws ParseException if Excel parsing fails
      * @throws GenerationException if code generation fails
      */
     public GenerationResponse generate(
             Path specFile,
-            Path sharedHeaderFile) throws ParseException, GenerationException {
+            Path mqMessageFile) throws ParseException, GenerationException {
 
         String transactionId = UUID.randomUUID().toString();
         logger.info("Starting generation transaction: {}", transactionId);
@@ -88,7 +88,7 @@ public class GenerationOrchestrator {
         try {
             // 1. Parse Excel spec
             logger.info("Parsing spec file: {}", specFile);
-            MessageModel model = parser.parse(specFile, sharedHeaderFile);
+            MessageModel model = parser.parse(specFile, mqMessageFile);
             logger.info("Parsing completed successfully");
 
             // 2. Create temporary output directory

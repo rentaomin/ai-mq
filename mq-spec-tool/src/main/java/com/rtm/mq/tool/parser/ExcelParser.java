@@ -49,7 +49,7 @@ public class ExcelParser implements Parser {
     private final Config config;
     private final SheetDiscovery sheetDiscovery;
     private final MetadataExtractor metadataExtractor;
-    private final SharedHeaderLoader sharedHeaderLoader;
+    private final MqMessageLoader mqMessageLoader;
 
     /**
      * Creates an ExcelParser with the specified configuration.
@@ -60,14 +60,14 @@ public class ExcelParser implements Parser {
         this.config = config;
         this.sheetDiscovery = new SheetDiscovery();
         this.metadataExtractor = new MetadataExtractor();
-        this.sharedHeaderLoader = new SharedHeaderLoader(this);
+        this.mqMessageLoader = new MqMessageLoader(this);
     }
 
     @Override
-    public MessageModel parse(Path specFile, Path sharedHeaderFile) {
+    public MessageModel parse(Path specFile, Path mqMessageFile) {
         validateInputFile(specFile);
-        if (sharedHeaderFile != null) {
-            validateInputFile(sharedHeaderFile);
+        if (mqMessageFile != null) {
+            validateInputFile(mqMessageFile);
         }
 
         // Configure POI ZipSecureFile to handle larger files with higher compression ratios
@@ -81,19 +81,23 @@ public class ExcelParser implements Parser {
             // 1. Discover Sheets
             SheetSet sheets = sheetDiscovery.discoverSheets(workbook);
 
-            // 2. Extract metadata with fallback logic
-            Metadata metadata = parseMetadataWithFallback(sheets, specFile, sharedHeaderFile);
+            // 2. Extract metadata (DO NOT use mqMessageFile - it has no metadata)
+            Metadata metadata = parseMetadataWithoutMqMessage(sheets, specFile);
             model.setMetadata(metadata);
 
-            // 3. Parse Shared Header
-            FieldGroup sharedHeader = parseSharedHeader(sheets, sharedHeaderFile);
+            // 3. Parse Embedded Shared Header (from Request/Response file)
+            FieldGroup sharedHeader = parseEmbeddedSharedHeader(sheets);
             model.setSharedHeader(sharedHeader);
 
-            // 4. Parse Request
+            // 4. Parse Standalone MQ Message File (if provided)
+            MqMessageModel mqMessage = parseMqMessageFile(mqMessageFile);
+            model.setMqMessage(mqMessage);
+
+            // 5. Parse Request
             FieldGroup request = parseSheet(sheets.getRequest(), "Request");
             model.setRequest(request);
 
-            // 5. Parse Response
+            // 6. Parse Response
             FieldGroup response = parseSheet(sheets.getResponse(), "Response");
             model.setResponse(response);
 
@@ -105,55 +109,44 @@ public class ExcelParser implements Parser {
     }
 
     /**
-     * Parses metadata with fallback logic.
+     * Parses metadata without consulting MQ message file.
      *
      * <p>Metadata extraction priority:</p>
      * <ol>
-     *   <li>Request Sheet (if present) - primary source</li>
-     *   <li>Embedded Shared Header Sheet (if Request lacks metadata or doesn't exist)</li>
-     *   <li>Separate Shared Header File (if both above fail)</li>
-     *   <li>Empty Metadata (if all sources fail)</li>
+     *   <li>Request Sheet (if present)</li>
+     *   <li>Embedded Shared Header Sheet (if Request lacks metadata)</li>
+     *   <li>Empty Metadata</li>
      * </ol>
+     *
+     * <p><strong>IMPORTANT:</strong> MQ message file is NOT used for metadata extraction.</p>
      *
      * @param sheets the discovered sheets from the main file
      * @param specFile path to the main specification file
-     * @param sharedHeaderFile optional path to separate shared header file
      * @return extracted Metadata, or empty Metadata if all sources fail
      */
-    private Metadata parseMetadataWithFallback(SheetSet sheets, Path specFile, Path sharedHeaderFile) {
+    private Metadata parseMetadataWithoutMqMessage(SheetSet sheets, Path specFile) {
         Metadata metadata = null;
 
         // Priority 1: Extract from Request Sheet (if present)
         if (sheets.getRequest() != null) {
-            metadata = metadataExtractor.extract(sheets.getRequest(), specFile, sharedHeaderFile);
+            metadata = metadataExtractor.extract(sheets.getRequest(), specFile);
             if (metadataExtractor.validate(metadata)) {
                 return metadata;
             }
         }
 
-        // Priority 2: Fallback to embedded Shared Header Sheet (if present and metadata incomplete)
+        // Priority 2: Fallback to embedded Shared Header Sheet (if present)
         if (sheets.hasSharedHeader()) {
-            metadata = metadataExtractor.extractSafely(sheets.getSharedHeader(), specFile, sharedHeaderFile);
+            metadata = metadataExtractor.extractSafely(sheets.getSharedHeader(), specFile);
             if (metadataExtractor.validate(metadata)) {
                 return metadata;
             }
         }
 
-        // Priority 3: Fallback to separate Shared Header File (if provided)
-        if (sharedHeaderFile != null) {
-            metadata = extractMetadataFromSharedHeaderFile(sharedHeaderFile, specFile);
-            if (metadataExtractor.validate(metadata)) {
-                return metadata;
-            }
-        }
-
-        // Priority 4: Return partial or empty metadata
+        // Priority 3: Return empty metadata
         if (metadata == null) {
             metadata = new Metadata();
             metadata.setSourceFile(specFile.toAbsolutePath().toString());
-            if (sharedHeaderFile != null) {
-                metadata.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
-            }
             metadata.setParseTimestamp(Instant.now().toString());
             metadata.setParserVersion(VersionRegistry.getParserVersion());
         }
@@ -162,80 +155,38 @@ public class ExcelParser implements Parser {
     }
 
     /**
-     * Extracts metadata from a separate Shared Header file.
+     * Parses embedded Shared Header sheet from the main spec file.
      *
-     * <p>This method opens the shared header file and attempts to extract
-     * metadata from it, supporting both dedicated header files and general
-     * Excel files with Shared Header sheets.</p>
+     * <p>This is DISTINCT from standalone MQ message files.
+     * Embedded shared headers are part of the request/response spec file.</p>
      *
-     * @param sharedHeaderFile path to the shared header file
-     * @param specFile path to the main spec file (for audit purposes)
-     * @return extracted Metadata
+     * @param sheets the discovered sheets from the main file
+     * @return the parsed FieldGroup containing shared header fields, or empty if none found
      */
-    private Metadata extractMetadataFromSharedHeaderFile(Path sharedHeaderFile, Path specFile) {
-        try (InputStream is = Files.newInputStream(sharedHeaderFile);
-             Workbook workbook = WorkbookFactory.create(is)) {
-
-            // Try to find and extract from Shared Header sheet
-            Sheet headerSheet = workbook.getSheet("Shared Header");
-            if (headerSheet != null) {
-                // Detect format before extracting metadata
-                SharedHeaderFormatDetector detector = new SharedHeaderFormatDetector();
-                SharedHeaderFormatDetector.FileFormat format = detector.detectFormat(workbook, headerSheet);
-
-                if (format == SharedHeaderFormatDetector.FileFormat.ISM_V2_FIX) {
-                    // ISM v2.0 FIX has no metadata - return empty metadata
-                    return createEmptyMetadata(specFile, sharedHeaderFile);
-                } else {
-                    // Standard format - extract metadata normally
-                    return metadataExtractor.extract(headerSheet, specFile, sharedHeaderFile);
-                }
-            }
-
-            // Fallback: Try first sheet if Shared Header not found
-            if (workbook.getNumberOfSheets() > 0) {
-                Sheet firstSheet = workbook.getSheetAt(0);
-
-                // Detect format before extracting metadata
-                SharedHeaderFormatDetector detector = new SharedHeaderFormatDetector();
-                SharedHeaderFormatDetector.FileFormat format = detector.detectFormat(workbook, firstSheet);
-
-                if (format == SharedHeaderFormatDetector.FileFormat.ISM_V2_FIX) {
-                    // ISM v2.0 FIX has no metadata - return empty metadata
-                    return createEmptyMetadata(specFile, sharedHeaderFile);
-                } else {
-                    // Standard format - extract metadata normally
-                    return metadataExtractor.extract(firstSheet, specFile, sharedHeaderFile);
-                }
-            }
-
-            // Return empty metadata if no sheet found
-            return createEmptyMetadata(specFile, sharedHeaderFile);
-
-        } catch (IOException e) {
-            // Log warning but don't fail - return empty metadata
-            // In production, you may want to add logging here
-            return createEmptyMetadata(specFile, sharedHeaderFile);
+    private FieldGroup parseEmbeddedSharedHeader(SheetSet sheets) {
+        if (sheets.hasSharedHeader()) {
+            return parseSheet(sheets.getSharedHeader(), "Shared Header");
+        } else {
+            return new FieldGroup();
         }
     }
 
     /**
-     * Creates an empty Metadata object with file paths and timestamps.
+     * Parses standalone MQ message file (if provided).
      *
-     * <p>Used as a fallback when metadata cannot be extracted or is not applicable
-     * (e.g., for ISM v2.0 FIX files which have no metadata).</p>
+     * <p>MQ message files are independent field definitions used for
+     * comparison and validation purposes. They do not contain metadata.</p>
      *
-     * @param specFile the main specification file path
-     * @param sharedHeaderFile the shared header file path
-     * @return a Metadata object with file paths and timestamps
+     * @param mqMessageFile path to the MQ message file, or null if not provided
+     * @return populated MqMessageModel, or null if no file provided
+     * @throws ParseException if file cannot be read or parsed
      */
-    private Metadata createEmptyMetadata(Path specFile, Path sharedHeaderFile) {
-        Metadata meta = new Metadata();
-        meta.setSourceFile(specFile.toAbsolutePath().toString());
-        meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
-        meta.setParseTimestamp(Instant.now().toString());
-        meta.setParserVersion(VersionRegistry.getParserVersion());
-        return meta;
+    private MqMessageModel parseMqMessageFile(Path mqMessageFile) {
+        if (mqMessageFile != null) {
+            return mqMessageLoader.loadFromFile(mqMessageFile, config);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -363,30 +314,6 @@ public class ExcelParser implements Parser {
             .children(node.getChildren())
             .source(node.getSource())
             .build();
-    }
-
-    /**
-     * Parses the Shared Header.
-     *
-     * <p>The Shared Header can come from three sources (in priority order):</p>
-     * <ol>
-     *   <li>A separate shared header file (if provided)</li>
-     *   <li>An embedded "Shared Header" sheet in the main file</li>
-     *   <li>Empty (if neither exists)</li>
-     * </ol>
-     *
-     * @param sheets the discovered sheets from the main file
-     * @param sharedHeaderFile optional path to separate shared header file
-     * @return the parsed FieldGroup for the shared header
-     */
-    private FieldGroup parseSharedHeader(SheetSet sheets, Path sharedHeaderFile) {
-        if (sharedHeaderFile != null) {
-            return sharedHeaderLoader.loadFromFile(sharedHeaderFile, config);
-        } else if (sheets.hasSharedHeader()) {
-            return parseSheet(sheets.getSharedHeader(), "Shared Header");
-        } else {
-            return new FieldGroup();  // Empty header
-        }
     }
 
     /**

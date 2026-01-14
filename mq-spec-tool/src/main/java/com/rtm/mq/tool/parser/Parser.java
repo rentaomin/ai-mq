@@ -25,14 +25,15 @@ public interface Parser {
      * Parses an Excel specification file.
      *
      * <p>This method reads the MQ message specification from the given Excel file
-     * and optionally merges shared header definitions from a separate file.</p>
+     * and optionally references field definitions from a standalone MQ message file.</p>
      *
      * @param specFile the path to the Excel specification file (must not be null)
-     * @param sharedHeaderFile optional path to a shared header Excel file;
-     *                         may be null if no shared headers are used
+     * @param mqMessageFile optional path to a standalone MQ message file;
+     *                      may be null if no MQ message reference is needed.
+     *                      NOTE: This file is NOT used for metadata extraction.
      * @return the parsed message model containing all field definitions and metadata
      * @throws com.rtm.mq.tool.exception.ParseException if parsing fails due to
      *         invalid file format, missing required sheets, or malformed data
      */
-    MessageModel parse(Path specFile, Path sharedHeaderFile);
+    MessageModel parse(Path specFile, Path mqMessageFile);
 }

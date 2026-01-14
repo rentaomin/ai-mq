@@ -51,14 +51,14 @@ public class SpecGenerationController {
      * <p>Request parameters:</p>
      * <ul>
      *   <li><b>specFile</b> (required): MQ message spec Excel file</li>
-     *   <li><b>sharedHeaderFile</b> (optional): Shared header Excel file</li>
+     *   <li><b>mqMessageFile</b> (optional): MQ message Excel file</li>
      *   <li><b>config</b> (optional): JSON configuration overrides</li>
      * </ul>
      *
      * <p>Returns ZIP archive containing all generated files.</p>
      *
      * @param specFile the MQ spec Excel file
-     * @param sharedHeaderFile optional shared header file
+     * @param mqMessageFile optional MQ message file
      * @param xmlNamespaceInbound XML namespace for inbound messages
      * @param xmlNamespaceOutbound XML namespace for outbound messages
      * @param xmlProjectGroupId Maven groupId for XML project
@@ -76,7 +76,7 @@ public class SpecGenerationController {
     @PostMapping(value = "/generate", produces = "application/zip")
     public ResponseEntity<Resource> generate(
             @RequestParam("specFile") MultipartFile specFile,
-            @RequestParam(value = "sharedHeaderFile", required = false) MultipartFile sharedHeaderFile,
+            @RequestParam(value = "mqMessageFile", required = false) MultipartFile mqMessageFile,
             @RequestParam(value = "xmlNamespaceInbound", required = false) String xmlNamespaceInbound,
             @RequestParam(value = "xmlNamespaceOutbound", required = false) String xmlNamespaceOutbound,
             @RequestParam(value = "xmlProjectGroupId", required = false) String xmlProjectGroupId,
@@ -96,22 +96,22 @@ public class SpecGenerationController {
 
         // 2. Save uploaded files to temp directory
         Path tempSpecFile = Files.createTempFile("spec-", ".xlsx");
-        Path tempSharedHeaderFile = null;
+        Path tempMqMessageFile = null;
 
         try {
             specFile.transferTo(tempSpecFile.toFile());
             logger.debug("Saved spec file to: {}", tempSpecFile);
 
-            if (sharedHeaderFile != null && !sharedHeaderFile.isEmpty()) {
-                tempSharedHeaderFile = Files.createTempFile("shared-header-", ".xlsx");
-                sharedHeaderFile.transferTo(tempSharedHeaderFile.toFile());
-                logger.debug("Saved shared header file to: {}", tempSharedHeaderFile);
+            if (mqMessageFile != null && !mqMessageFile.isEmpty()) {
+                tempMqMessageFile = Files.createTempFile("mq-message-", ".xlsx");
+                mqMessageFile.transferTo(tempMqMessageFile.toFile());
+                logger.debug("Saved MQ message file to: {}", tempMqMessageFile);
             }
 
             // 3. Execute generation
             GenerationResponse response = orchestrator.generate(
                     tempSpecFile,
-                    tempSharedHeaderFile
+                    tempMqMessageFile
             );
 
             logger.info("Generation completed. Transaction ID: {}", response.getTransactionId());
@@ -134,8 +134,8 @@ public class SpecGenerationController {
         } finally {
             // Cleanup temporary input files
             Files.deleteIfExists(tempSpecFile);
-            if (tempSharedHeaderFile != null) {
-                Files.deleteIfExists(tempSharedHeaderFile);
+            if (tempMqMessageFile != null) {
+                Files.deleteIfExists(tempMqMessageFile);
             }
         }
     }

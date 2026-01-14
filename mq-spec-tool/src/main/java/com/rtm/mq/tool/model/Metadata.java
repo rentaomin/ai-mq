@@ -13,9 +13,6 @@ public class Metadata {
     /** The path to the source Excel specification file. */
     private String sourceFile;
 
-    /** The path to the shared header specification file (if any). */
-    private String sharedHeaderFile;
-
     /** The ISO 8601 timestamp when parsing occurred. */
     private String parseTimestamp;
 
@@ -58,24 +55,6 @@ public class Metadata {
      */
     public void setSourceFile(String sourceFile) {
         this.sourceFile = sourceFile;
-    }
-
-    /**
-     * Gets the path to the shared header specification file.
-     *
-     * @return the shared header file path, or null if not applicable
-     */
-    public String getSharedHeaderFile() {
-        return sharedHeaderFile;
-    }
-
-    /**
-     * Sets the path to the shared header specification file.
-     *
-     * @param sharedHeaderFile the shared header file path to set
-     */
-    public void setSharedHeaderFile(String sharedHeaderFile) {
-        this.sharedHeaderFile = sharedHeaderFile;
     }
 
     /**

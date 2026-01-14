@@ -140,9 +140,9 @@ public final class CliOptions {
                 }
             }
 
-            // Extract shared header path if present
-            if (cmd.hasOption("shared-header")) {
-                inputPaths.add(Paths.get(cmd.getOptionValue("shared-header")));
+            // Extract MQ message path if present
+            if (cmd.hasOption("mq-message")) {
+                inputPaths.add(Paths.get(cmd.getOptionValue("mq-message")));
             }
 
             // Extract output path
@@ -206,10 +206,10 @@ public final class CliOptions {
                 .desc("Input Excel specification file(s)")
                 .build());
 
-        options.addOption(Option.builder("s")
-                .longOpt("shared-header")
+        options.addOption(Option.builder("m")
+                .longOpt("mq-message")
                 .hasArg()
-                .desc("Shared header Excel file")
+                .desc("MQ message Excel file (for field reference)")
                 .build());
 
         options.addOption(Option.builder("o")
@@ -331,7 +331,7 @@ public final class CliOptions {
                 "\nExamples:\n" +
                         "  " + PROGRAM_NAME + " generate -i spec.xlsx -o output/\n" +
                         "  " + PROGRAM_NAME + " validate -i spec.xlsx\n" +
-                        "  " + PROGRAM_NAME + " parse -i spec.xlsx -s shared-header.xlsx\n" +
+                        "  " + PROGRAM_NAME + " parse -i spec.xlsx -m mq-message.xlsx\n" +
                         "  " + PROGRAM_NAME + " version\n" +
                         "  " + PROGRAM_NAME + " help\n",
                 true);

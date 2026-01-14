@@ -29,6 +29,9 @@ public class MessageModel {
     /** Response message field group. */
     private FieldGroup response;
 
+    /** Standalone MQ message field definitions (optional). */
+    private MqMessageModel mqMessage;
+
     /**
      * Gets the metadata about the parsed specification.
      *
@@ -99,5 +102,23 @@ public class MessageModel {
      */
     public void setResponse(FieldGroup response) {
         this.response = response;
+    }
+
+    /**
+     * Gets the standalone MQ message model.
+     *
+     * @return the MQ message model, or null if not provided
+     */
+    public MqMessageModel getMqMessage() {
+        return mqMessage;
+    }
+
+    /**
+     * Sets the standalone MQ message model.
+     *
+     * @param mqMessage the MQ message model to set
+     */
+    public void setMqMessage(MqMessageModel mqMessage) {
+        this.mqMessage = mqMessage;
     }
 }

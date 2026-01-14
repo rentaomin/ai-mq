@@ -25,12 +25,14 @@ import java.time.Instant;
  * Row 8: Header row
  * </pre>
  *
- * <p>Support for multiple metadata extraction sources:</p>
+ * <p>Metadata extraction sources:</p>
  * <ul>
  *   <li>Primary: Request Sheet (typical case)</li>
- *   <li>Fallback: Shared Header Sheet (if embedded)</li>
- *   <li>Fallback: Shared Header File (separate file case)</li>
+ *   <li>Fallback: Embedded Shared Header Sheet (if present in request/response file)</li>
  * </ul>
+ *
+ * <p><strong>NOTE:</strong> MQ message files (like ISM v2.0 FIX) do NOT contain metadata
+ * and are never consulted during metadata extraction.</p>
  */
 public class MetadataExtractor {
 
@@ -50,19 +52,15 @@ public class MetadataExtractor {
     /**
      * Extracts metadata from an Excel Sheet.
      *
-     * @param sheet           Excel Sheet (Request or any sheet containing metadata)
-     * @param sourceFile      path to the source Excel file
-     * @param sharedHeaderFile optional path to the shared header file (may be null)
+     * @param sheet      Excel Sheet (Request or embedded Shared Header)
+     * @param sourceFile path to the source Excel file
      * @return a populated Metadata object
      */
-    public Metadata extract(Sheet sheet, Path sourceFile, Path sharedHeaderFile) {
+    public Metadata extract(Sheet sheet, Path sourceFile) {
         Metadata meta = new Metadata();
 
         // Set file paths
         meta.setSourceFile(sourceFile.toAbsolutePath().toString());
-        if (sharedHeaderFile != null) {
-            meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
-        }
 
         // Set parse timestamp (ISO 8601 format) and parser version
         meta.setParseTimestamp(Instant.now().toString());
@@ -80,23 +78,19 @@ public class MetadataExtractor {
      * <p>This method handles cases where the sheet may be null,
      * rows may not exist, or cells may be missing.</p>
      *
-     * @param sheet           Excel Sheet (may be null)
-     * @param sourceFile      path to the source Excel file
-     * @param sharedHeaderFile optional path to the shared header file
+     * @param sheet      Excel Sheet (may be null)
+     * @param sourceFile path to the source Excel file
      * @return a populated Metadata object, or empty if sheet is null
      */
-    public Metadata extractSafely(Sheet sheet, Path sourceFile, Path sharedHeaderFile) {
+    public Metadata extractSafely(Sheet sheet, Path sourceFile) {
         if (sheet == null) {
             Metadata meta = new Metadata();
             meta.setSourceFile(sourceFile.toAbsolutePath().toString());
-            if (sharedHeaderFile != null) {
-                meta.setSharedHeaderFile(sharedHeaderFile.toAbsolutePath().toString());
-            }
             meta.setParseTimestamp(Instant.now().toString());
             meta.setParserVersion(VersionRegistry.getParserVersion());
             return meta;
         }
-        return extract(sheet, sourceFile, sharedHeaderFile);
+        return extract(sheet, sourceFile);
     }
 
     /**
