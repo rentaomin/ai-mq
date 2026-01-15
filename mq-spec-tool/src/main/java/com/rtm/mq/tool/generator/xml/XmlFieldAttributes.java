@@ -23,7 +23,6 @@ public class XmlFieldAttributes {
      */
     public XmlFieldAttributes(XmlFieldType type) {
         this.type = type;
-        attributes.put("type", type.getValue());
     }
 
     /**
@@ -155,6 +154,19 @@ public class XmlFieldAttributes {
      */
     public XmlFieldAttributes floatingNumberLength(int length) {
         attributes.put("floatingNumberLength", String.valueOf(length));
+        return this;
+    }
+
+    /**
+     * Sets the type attribute (field type like DataField, CompositeField, RepeatingField).
+     *
+     * @param value the field type value
+     * @return this instance for method chaining
+     */
+    public XmlFieldAttributes fieldType(String value) {
+        if (value != null) {
+            attributes.put("type", value);
+        }
         return this;
     }
 

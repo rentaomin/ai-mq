@@ -37,6 +37,9 @@ public class XmlElement {
     /** The text content for leaf elements. */
     private String textContent;
 
+    /** Flag to add blank line after this element. */
+    private boolean blankLineAfter = false;
+
     /**
      * Constructs an XML element with the specified tag name.
      *
@@ -158,5 +161,25 @@ public class XmlElement {
      */
     public boolean isEmpty() {
         return children.isEmpty() && textContent == null;
+    }
+
+    /**
+     * Marks that a blank line should be added after this element.
+     *
+     * @param mark true to add blank line after
+     * @return this element for method chaining
+     */
+    public XmlElement markForBlankLine(boolean mark) {
+        this.blankLineAfter = mark;
+        return this;
+    }
+
+    /**
+     * Checks if a blank line should be added after this element.
+     *
+     * @return true if blank line should follow
+     */
+    public boolean isBlankLineAfter() {
+        return blankLineAfter;
     }
 }

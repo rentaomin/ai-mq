@@ -82,11 +82,13 @@ public class XmlTypeMapper {
      */
     private XmlFieldAttributes mapGroupIdField(FieldNode node) {
         return new XmlFieldAttributes(XmlFieldType.DATA_FIELD)
+            .name(node.getCamelCaseName())
             .length(node.getLength() != null ? node.getLength() : 10)
             .fixedLength(true)
             .transitory(true)
             .defaultValue(node.getGroupId())
-            .converter(ConverterMapper.STRING_CONVERTER);
+            .converter(ConverterMapper.STRING_CONVERTER)
+            .fieldType(XmlFieldType.DATA_FIELD.getValue());
     }
 
     /**
@@ -101,13 +103,15 @@ public class XmlTypeMapper {
     private XmlFieldAttributes mapOccurrenceCountField(FieldNode node) {
         int count = occurrenceParser.calculateFixedCount(node.getOccurrenceCount());
         return new XmlFieldAttributes(XmlFieldType.DATA_FIELD)
+            .name(node.getCamelCaseName())
             .length(node.getLength() != null ? node.getLength() : 4)
             .fixedLength(true)
             .transitory(true)
             .defaultValue(String.valueOf(count))
             .pad("0")
             .alignRight(true)
-            .converter(ConverterMapper.COUNTER_CONVERTER);
+            .converter(ConverterMapper.COUNTER_CONVERTER)
+            .fieldType(XmlFieldType.DATA_FIELD.getValue());
     }
 
     /**
@@ -119,7 +123,8 @@ public class XmlTypeMapper {
     private XmlFieldAttributes mapCompositeField(FieldNode node) {
         return new XmlFieldAttributes(XmlFieldType.COMPOSITE_FIELD)
             .name(node.getCamelCaseName())
-            .forType(buildForType(node.getClassName()));
+            .forType(buildForType(node.getClassName()))
+            .fieldType(XmlFieldType.COMPOSITE_FIELD.getValue());
     }
 
     /**
@@ -133,7 +138,8 @@ public class XmlTypeMapper {
         return new XmlFieldAttributes(XmlFieldType.REPEATING_FIELD)
             .name(node.getCamelCaseName())
             .fixedCount(fixedCount)
-            .forType(buildForType(node.getClassName()));
+            .forType(buildForType(node.getClassName()))
+            .fieldType(XmlFieldType.REPEATING_FIELD.getValue());
     }
 
     /**
@@ -152,28 +158,44 @@ public class XmlTypeMapper {
 
         String dataType = node.getDataType();
 
-        // default value
         if (node.getDefaultValue() != null) {
             attrs.defaultValue(node.getDefaultValue());
         }
 
-        // type-specific formatting
         if (isNumericType(dataType)) {
             attrs.pad("0").alignRight(true);
         } else {
             attrs.nullPad(" ");
         }
 
-        // converter
         attrs.converter(converterMapper.getConverter(dataType));
 
-        // forType (for amount/currency types)
         String forType = converterMapper.getForType(dataType);
         if (forType != null) {
             attrs.forType(forType);
+        } else {
+            attrs.forType(getDefaultJavaType(dataType));
         }
 
-        return attrs;
+        return attrs.fieldType(XmlFieldType.DATA_FIELD.getValue());
+    }
+
+    private String getDefaultJavaType(String dataType) {
+        if (dataType == null) return "java.lang.String";
+        String normalized = dataType.trim().toLowerCase();
+        switch (normalized) {
+            case "string":
+            case "an":
+            case "a/n":
+            case "a":
+            case "date":
+            case "number":
+            case "n":
+            case "unsigned integer":
+                return "java.lang.String";
+            default:
+                return "java.lang.String";
+        }
     }
 
     /**

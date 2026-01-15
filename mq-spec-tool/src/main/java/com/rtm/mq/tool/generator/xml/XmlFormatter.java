@@ -108,9 +108,11 @@ public class XmlFormatter {
                   .append(escapeXml(element.getTextContent())).append("\n");
             }
 
-            // Child elements (order preserved by ArrayList)
             for (XmlElement child : element.getChildren()) {
                 formatElement(sb, child, level + 1);
+                if (child.isBlankLineAfter()) {
+                    sb.append("\n");
+                }
             }
 
             sb.append(indent).append("</").append(element.getTagName()).append(">\n");

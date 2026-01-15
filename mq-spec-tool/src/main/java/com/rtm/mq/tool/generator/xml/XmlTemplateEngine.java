@@ -4,6 +4,7 @@ import com.rtm.mq.tool.config.Config;
 import com.rtm.mq.tool.model.FieldGroup;
 import com.rtm.mq.tool.model.FieldNode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -123,13 +124,40 @@ public class XmlTemplateEngine {
      * @param fields the list of field nodes to add
      */
     private void addFields(XmlElement parent, List<FieldNode> fields) {
+        List<FieldNode> transitoryFields = new ArrayList<>();
+        List<FieldNode> compositeFields = new ArrayList<>();
+        List<FieldNode> otherFields = new ArrayList<>();
+
         for (FieldNode field : fields) {
+            if (field.isTransitory()) {
+                transitoryFields.add(field);
+            } else if (field.isObject() || field.isArray()) {
+                compositeFields.add(field);
+            } else {
+                otherFields.add(field);
+            }
+        }
+
+        for (FieldNode field : transitoryFields) {
+            XmlElement fieldElement = createFieldElement(field);
+            parent.addChild(fieldElement);
+        }
+
+        for (FieldNode field : compositeFields) {
+            XmlElement fieldElement = createFieldElement(field);
+            parent.addChild(fieldElement);
+            fieldElement.markForBlankLine(true);
+
+            if (!field.getChildren().isEmpty()) {
+                addFields(fieldElement, field.getChildren());
+            }
+        }
+
+        for (FieldNode field : otherFields) {
             XmlElement fieldElement = createFieldElement(field);
             parent.addChild(fieldElement);
 
-            // Recursively add child fields for objects and arrays (AC4)
-            if (!field.getChildren().isEmpty() &&
-                (field.isObject() || field.isArray())) {
+            if (!field.getChildren().isEmpty()) {
                 addFields(fieldElement, field.getChildren());
             }
         }
