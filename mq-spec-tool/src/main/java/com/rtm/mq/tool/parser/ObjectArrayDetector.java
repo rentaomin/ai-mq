@@ -144,12 +144,18 @@ public class ObjectArrayDetector {
         }
 
         String[] parts = fieldName.split(":", 2);
-        if (parts.length != 2 || parts[0].trim().isEmpty() || parts[1].trim().isEmpty()) {
+        String left = parts[0].trim();
+        String right = parts.length > 1 ? parts[1].trim() : "";
+        
+        
+        if (right.isEmpty()) {
             throw new ParseException("Invalid object definition format: " + fieldName +
                 ". Expected format: 'fieldName:ClassName'");
         }
-
-        return new ObjectDefinition(parts[0].trim(), parts[1].trim());
+        if (left.isEmpty()) {
+            left = right;
+        }
+        return new ObjectDefinition(right, right);
     }
 
     /**
@@ -203,6 +209,25 @@ public class ObjectArrayDetector {
         }
 
         return containerNode;
+    }
+
+    public ArrayInfo parsedArrayInfo(FieldNode containerNode) {
+        if (containerNode.getChildren() == null) {
+            return null;
+        }
+
+        // Search for occurrenceCount among children
+        for (FieldNode child : containerNode.getChildren()) {
+            if (isOccurrenceCountField(child.getOriginalName())) {
+                String occCount = child.getOccurrenceCount();
+                if (occCount != null) {
+                    return occurrenceParser.parse(occCount);
+                }
+                break;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -260,7 +285,7 @@ public class ObjectArrayDetector {
      */
     private FieldNode enhanceAsObjectOrArray(FieldNode node, String fieldName) {
         ObjectDefinition objDef = parseObjectDefinition(fieldName);
-
+        ArrayInfo arrayInfo = parsedArrayInfo(node);
         return FieldNode.builder()
             .originalName(fieldName)
             .camelCaseName(null)  // Will be set by T-106 NamingNormalizer
@@ -269,8 +294,8 @@ public class ObjectArrayDetector {
             .optionality(node.getOptionality())
             .defaultValue(node.getDefaultValue())
             .hardCodeValue(node.getHardCodeValue())
-            .isObject(true)  // Default to object; updateContainerType may change to array
-            .isArray(false)
+            .isObject(arrayInfo == null || !arrayInfo.isArray())  // Default to object; updateContainerType may change to array
+            .isArray(arrayInfo != null && arrayInfo.isArray())
             .children(node.getChildren())
             .source(node.getSource())
             .build();

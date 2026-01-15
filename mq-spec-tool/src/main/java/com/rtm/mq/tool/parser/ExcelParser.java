@@ -6,6 +6,8 @@ import com.rtm.mq.tool.exception.ParseException;
 import com.rtm.mq.tool.model.*;
 import com.rtm.mq.tool.version.VersionRegistry;
 import org.apache.poi.openxml4j.util.ZipSecureFile;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -85,19 +87,15 @@ public class ExcelParser implements Parser {
             Metadata metadata = parseMetadataWithoutMqMessage(sheets, specFile);
             model.setMetadata(metadata);
 
-            // 3. Parse Embedded Shared Header (from Request/Response file)
-            FieldGroup sharedHeader = parseEmbeddedSharedHeader(sheets);
-            model.setSharedHeader(sharedHeader);
-
-            // 4. Parse Standalone MQ Message File (if provided)
+            // 3. Parse Standalone MQ Message File (if provided)
             MqMessageModel mqMessage = parseMqMessageFile(mqMessageFile);
             model.setMqMessage(mqMessage);
 
-            // 5. Parse Request
+            // 4. Parse Request
             FieldGroup request = parseSheet(sheets.getRequest(), "Request");
             model.setRequest(request);
 
-            // 6. Parse Response
+            // 5. Parse Response
             FieldGroup response = parseSheet(sheets.getResponse(), "Response");
             model.setResponse(response);
 
@@ -127,17 +125,18 @@ public class ExcelParser implements Parser {
     private Metadata parseMetadataWithoutMqMessage(SheetSet sheets, Path specFile) {
         Metadata metadata = null;
 
-        // Priority 1: Extract from Request Sheet (if present)
-        if (sheets.getRequest() != null) {
-            metadata = metadataExtractor.extract(sheets.getRequest(), specFile);
+
+        // Priority 1: Fallback to embedded Shared Header Sheet (if present)
+        if (sheets.hasSharedHeader()) {
+            metadata = metadataExtractor.extractSafely(sheets.getSharedHeader(), specFile);
             if (metadataExtractor.validate(metadata)) {
                 return metadata;
             }
         }
-
-        // Priority 2: Fallback to embedded Shared Header Sheet (if present)
-        if (sheets.hasSharedHeader()) {
-            metadata = metadataExtractor.extractSafely(sheets.getSharedHeader(), specFile);
+        
+        // Priority 2: Extract from Request Sheet (if present)
+        if (sheets.getRequest() != null) {
+            metadata = metadataExtractor.extract(sheets.getRequest(), specFile);
             if (metadataExtractor.validate(metadata)) {
                 return metadata;
             }
@@ -160,14 +159,98 @@ public class ExcelParser implements Parser {
      * <p>This is DISTINCT from standalone MQ message files.
      * Embedded shared headers are part of the request/response spec file.</p>
      *
+     * <p>The embedded Shared Header sheet is expected to have the same structure
+     * as Request/Response sheets:</p>
+     * <ul>
+     *   <li>Rows 1-7: Metadata (Operation Name, ID, Version, etc.)</li>
+     *   <li>Row 8: Column header row</li>
+     *   <li>Rows 9+: Field definitions</li>
+     * </ul>
+     *
+     * <p>If the Shared Header sheet contains only metadata rows (1-7) without
+     * field definitions, returns an empty FieldGroup.</p>
+     *
      * @param sheets the discovered sheets from the main file
      * @return the parsed FieldGroup containing shared header fields, or empty if none found
      */
     private FieldGroup parseEmbeddedSharedHeader(SheetSet sheets) {
-        if (sheets.hasSharedHeader()) {
-            return parseSheet(sheets.getSharedHeader(), "Shared Header");
-        } else {
+        if (!sheets.hasSharedHeader()) {
             return new FieldGroup();
+        }
+
+        Sheet sharedHeaderSheet = sheets.getSharedHeader();
+
+        // Check if header row (row 8, 0-indexed as 7) exists and has valid columns
+        Row headerRow = sharedHeaderSheet.getRow(HEADER_ROW_INDEX);
+        if (headerRow == null) {
+            // No header row found - Shared Header contains only metadata rows (1-7)
+            // Return empty FieldGroup as there are no field definitions to parse
+            return new FieldGroup();
+        }
+
+        // Validate that at least one required column exists before parsing
+        // This prevents unnecessary parsing attempts when header row exists but is empty
+        if (isEmptyHeaderRow(headerRow)) {
+            return new FieldGroup();
+        }
+
+        // Parse sheet with valid header row and field definitions
+        return parseSheet(sharedHeaderSheet, "Shared Header");
+    }
+
+    /**
+     * Checks if a header row is empty (contains no recognized column names).
+     *
+     * @param headerRow the header row to check
+     * @return true if the header row has no cells or all cells are empty
+     */
+    private boolean isEmptyHeaderRow(Row headerRow) {
+        if (headerRow == null) {
+            return true;
+        }
+
+        // Check if any cell in the header row contains non-empty content
+        for (Cell cell : headerRow) {
+            if (cell != null) {
+                String cellValue = getCellStringValue(cell);
+                if (cellValue != null && !cellValue.trim().isEmpty()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Extracts string value from a cell, handling different cell types.
+     *
+     * @param cell the cell to read
+     * @return the cell value as a string, or null if empty/unsupported
+     */
+    private String getCellStringValue(Cell cell) {
+        if (cell == null) {
+            return null;
+        }
+
+        CellType cellType = cell.getCellType();
+        if (cellType == CellType.FORMULA) {
+            cellType = cell.getCachedFormulaResultType();
+        }
+
+        switch (cellType) {
+            case STRING:
+                return cell.getStringCellValue();
+            case NUMERIC:
+                double numValue = cell.getNumericCellValue();
+                if (numValue == Math.floor(numValue)) {
+                    return String.valueOf((int) numValue);
+                }
+                return String.valueOf(numValue);
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            default:
+                return null;
         }
     }
 

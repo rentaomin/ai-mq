@@ -47,7 +47,7 @@ public class MetadataExtractor {
     private static final int COL_LABEL = 1;             // Column B
     private static final int COL_VALUE = 2;             // Column C
     private static final int COL_VERSION_LABEL = 3;     // Column D
-    private static final int COL_VERSION_VALUE = 4;     // Column E
+    private static final int COL_VERSION_VALUE = 5;     // Column E
 
     /**
      * Extracts metadata from an Excel Sheet.
@@ -112,11 +112,11 @@ public class MetadataExtractor {
         String operationId = extractCellValue(sheet, ROW_OPERATION_ID, COL_VALUE);
         meta.setOperationId(trimOrNull(operationId));
 
-        // Extract Version (Row 3, Column E)
+        // Extract Version (Row 3, Column F)
         String version = extractCellValue(sheet, ROW_OPERATION_ID, COL_VERSION_VALUE);
         meta.setVersion(trimOrNull(version));
 
-        // Extract Version (Row 4, Column E)
+        // Extract Version (Row 4, Column F)
         String serviceCategory = extractCellValue(sheet, ROW_SERVICE_CATEGORY, COL_VERSION_VALUE);
         meta.setServiceCategory(trimOrNull(serviceCategory));
 
@@ -125,7 +125,7 @@ public class MetadataExtractor {
         meta.setServiceInterface(trimOrNull(serviceInterface));
 
         // Extract Version (Row 5, Column E)
-        String serviceComponent= extractCellValue(sheet, ROW_SERVICE_COMPONENT, COL_VERSION_VALUE);
+        String serviceComponent= extractCellValue(sheet, ROW_SERVICE_COMPONENT, COL_VALUE);
         meta.setServiceComponent(trimOrNull(serviceComponent));
         
         // Extract Version (Row 5, Column E)
@@ -133,7 +133,7 @@ public class MetadataExtractor {
         meta.setServiceID(trimOrNull(serviceID));
 
         // Extract Version (Row 6, Column E)
-        String description = extractCellValue(sheet, ROW_DESCRIPTION, COL_VERSION_VALUE);
+        String description = extractCellValue(sheet, ROW_DESCRIPTION, COL_VALUE);
         meta.setDescription(trimOrNull(description));
         
     }

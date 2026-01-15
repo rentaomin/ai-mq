@@ -201,7 +201,7 @@ public class CamelCaseConverter {
             return str;
         }
         return Character.toLowerCase(str.charAt(0)) +
-               (str.length() > 1 ? str.substring(1).toLowerCase() : "");
+               (str.length() > 1 ? str.substring(1) : "");
     }
 
     /**
